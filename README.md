@@ -19,7 +19,6 @@ One skill (`travelkit`) with 15 per-tool reference files organized into four wor
 
 - An agent runtime that can load reusable instructions, skills, prompts, or policy files.
 - A TravelKit MCP server exposing the flight tools referenced by the skill files.
-- For local signed TravelKit requests, `shasum` and a POSIX-compatible shell.
 
 The skills intentionally do not include API credentials, private endpoints, or live passenger data.
 
@@ -34,51 +33,115 @@ cp -R skills/travelkit /path/to/your-agent/skills/
 
 If your framework does not support directory-based skills, import the relevant `SKILL.md` files as system instructions or workflow policy for your agent.
 
+## MCP Connection
+
+- **Endpoint**: `https://mcp.travelkit.ai/mcp` (Streamable HTTP)
+- **Auth**: Bearer token via `Authorization: Bearer {TRAVELKIT_API_KEY}`
+- **Required headers**: `Content-Type: application/json`, `Accept: application/json, text/event-stream`
+
+```bash
+curl -X POST https://mcp.travelkit.ai/mcp \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -H "Authorization: Bearer ${TRAVELKIT_API_KEY}" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "tools/call",
+    "id": 1,
+    "params": {
+      "name": "flight_search",
+      "arguments": {
+        "cabinClass": "economy",
+        "journeys": [{"origin": "BJS", "destination": "BKK", "departureDate": "2026-06-01"}],
+        "adult": 1,
+        "child": 0,
+        "infant": 0
+      }
+    }
+  }'
+```
+
+Do **not** write `TRAVELKIT_API_KEY` into `SKILL.md`, logs, or user-visible messages.
+
 ## Usage
 
-Load `skills/travelkit/SKILL.md` as the main entry point. The agent will follow the Module Selection Guide to load the relevant per-tool ref file for each task:
+Load `skills/travelkit/SKILL.md` as the main entry point. The agent follows the Module Selection Guide to load the relevant per-tool ref file for each task:
 
-- Search / compare flights → `references/flight-search.md`
-- Verify real-time price → `references/flight-verify.md`
-- Collect passengers, create order → `references/flight-create-order.md`
-- Pay → `references/flight-pay-order.md`
-- Order lookup / cancel / refund / change / itinerary → respective `references/flight-*.md`
-- MCP setup and global safety policy → `references/mcp-connection.md`, `tool-categories.md`, `hidden-fields.md`, `confirmation-rules.md`, `output-rules.md`
+| Task | Reference |
+|------|-----------|
+| Search / compare flights | `references/flight-search.md` |
+| Query price by flight number | `references/flight-pricing.md` |
+| Verify real-time price for a selected option | `references/flight-verify.md` |
+| Collect passengers and create order | `references/flight-create-order.md` |
+| Pay for an order | `references/flight-pay-order.md` |
+| Look up order status | `references/flight-order-lookup.md` |
+| Cancel an order | `references/flight-cancel.md` |
+| Refund / 退票 | `references/flight-refund.md` |
+| Change / 改签 | `references/flight-change.md` |
+| Download itinerary | `references/flight-itinerary.md` |
+| MCP connection and auth | `references/mcp-connection.md` |
+| Tool categories (read vs write) | `references/tool-categories.md` |
+| Hidden internal fields | `references/hidden-fields.md` |
+| Write-operation confirmation rules | `references/confirmation-rules.md` |
+| User-facing output rules | `references/output-rules.md` |
 
-All ref files keep internal MCP fields hidden and require explicit confirmation before every state-changing operation.
+## Tool Categories
 
-Set `TRAVELKIT_API_KEY` as the Bearer Token in the `Authorization` header.
+**Read tools** — call as needed, no extra confirmation required:
+
+`flight_search`, `flight_pricing`, `flight_verify_solution`, `flight_order_detail`, `flight_order_detail_by_external_id`, `flight_order_list`, `flight_download_itinerary`, `flight_change_search`, `flight_refund_quote`, `flight_refund_money_search`, `flight_get_airline_alliances`, `flight_get_airline_alliance_by_airline`, `flight_get_balance`
+
+**Write tools** — require explicit user confirmation before every call:
+
+`flight_create_order`, `flight_pay_order`, `flight_cancel_order`, `flight_refund_request`, `flight_refund_confirm`, `flight_change_request`
+
+## Booking Workflow
+
+```
+flight_search / flight_pricing
+        ↓  user selects option
+flight_verify_solution          ← verify real-time price
+        ↓  price confirmed
+flight_create_order             ← collect passengers → create order (no auto-pay)
+        ↓  user confirms payment
+flight_pay_order                ← pay order
+        ↓
+flight_order_detail             ← verify final ticket status
+```
+
+**Aftercare**: `flight_order_detail` / `flight_order_list` → `flight_cancel_order` / `flight_refund_*` / `flight_change_*` / `flight_download_itinerary`
 
 ## Safety Principles
 
-- Never expose internal fields such as `solutionId`, `orderKey`, confirmation flags, raw passenger IDs, segment IDs, or raw MCP JSON to normal users.
-- Never create an order, pay, cancel, refund, confirm a refund, or submit a change request without explicit user confirmation.
-- Collect passport, ID card, birthday, phone, and email only at the correct booking stage.
-- If baggage, refund, change, ticketing, or policy details are not returned by tools, say they were not returned instead of inventing them.
-- Keep normal consumer responses in Simplified Chinese unless the user asks for another language.
+- **Hide internals** — never expose `solutionId`, `orderKey`, `externalOrderId`, confirmation flags, raw `passengerIds`/`segmentIds`, `idempotencyKey`, API keys, or raw MCP JSON to normal users.
+- **Confirm before every write** — restate key details and get explicit confirmation before calling any write tool. Generic intent ("帮我订", "退了吧") is not sufficient.
+- **Collect personal info at the right stage** — collect passport / ID card / birthday / phone / email only after price verification passes and the user confirms they want to proceed with booking.
+- **Never invent missing data** — if baggage, refund, change, ticketing, or policy details are not returned by tools, say they were not returned.
+- **Simplified Chinese by default** — respond in Simplified Chinese for normal consumers unless the user requests another language.
+- **Self-contained rules** — the agent must enforce all rules above independently of whether TravelKit MCP server prompts are loaded.
 
 ## Repository Layout
 
 ```text
 skills/
   travelkit/
-    SKILL.md
+    SKILL.md                          # main entry point
     references/
-      flight-search.md
-      flight-pricing.md
-      flight-verify.md
-      flight-create-order.md
-      flight-pay-order.md
-      flight-order-lookup.md
-      flight-cancel.md
-      flight-refund.md
-      flight-change.md
-      flight-itinerary.md
-      mcp-connection.md
-      tool-categories.md
-      hidden-fields.md
-      confirmation-rules.md
-      output-rules.md
+      flight-search.md              # flight_search — search flights
+      flight-pricing.md             # flight_pricing — query price by flight number
+      flight-verify.md              # flight_verify_solution — verify real-time price
+      flight-create-order.md        # flight_create_order — collect passengers + create order
+      flight-pay-order.md           # flight_pay_order — pay order
+      flight-order-lookup.md        # flight_order_detail / list — look up orders
+      flight-cancel.md              # flight_cancel_order — cancel order
+      flight-refund.md              # flight_refund_* — refund flow
+      flight-change.md              # flight_change_* — change flow
+      flight-itinerary.md           # flight_download_itinerary — download itinerary
+      mcp-connection.md             # MCP connection and auth
+      tool-categories.md            # read vs write tool classification
+      hidden-fields.md              # internal fields that must never be exposed
+      confirmation-rules.md         # per-operation confirmation requirements
+      output-rules.md               # user-facing output rules
 ```
 
 ## Contributing
