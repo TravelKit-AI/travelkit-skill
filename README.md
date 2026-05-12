@@ -6,12 +6,14 @@ The project is prompt and policy content, not a standalone flight API client. It
 
 ## What Is Included
 
-| Skill | Purpose |
+One skill (`travelkit`) with 15 per-tool reference files organized into four workflow groups:
+
+| Group | Reference Files |
 |---|---|
-| `travelkit-flight-shopping` | Search, compare, recommend, and label flight options as `F1`-`F5`. |
-| `travelkit-flight-booking` | Verify selected prices, collect passenger details, create orders, and handle payment confirmation. |
-| `travelkit-flight-aftercare` | Check orders, download itineraries, cancel unpaid orders, request refunds, and change flights. |
-| `travelkit-agent-integration` | Shared TravelKit MCP safety, privacy, confirmation, hidden-field, and signing rules. |
+| **Flight Shopping** | `flight-search`, `flight-pricing` |
+| **Flight Booking** | `flight-verify`, `flight-create-order`, `flight-pay-order` |
+| **Flight Aftercare** | `flight-order-lookup`, `flight-cancel`, `flight-refund`, `flight-change`, `flight-itinerary` |
+| **Agent Integration** | `mcp-connection`, `tool-categories`, `hidden-fields`, `confirmation-rules`, `output-rules` |
 
 ## Requirements
 
@@ -27,21 +29,23 @@ Copy, symlink, or import the skill directories according to your agent framework
 
 ```bash
 mkdir -p /path/to/your-agent/skills
-cp -R skills/travelkit-* /path/to/your-agent/skills/
+cp -R skills/travelkit /path/to/your-agent/skills/
 ```
 
 If your framework does not support directory-based skills, import the relevant `SKILL.md` files as system instructions or workflow policy for your agent.
 
 ## Usage
 
-After installation, load or invoke the relevant skill from an agent task:
+Load `skills/travelkit/SKILL.md` as the main entry point. The agent will follow the Module Selection Guide to load the relevant per-tool ref file for each task:
 
-- Use `travelkit-flight-shopping` when the user wants to search, compare, filter, or choose flights.
-- Use `travelkit-flight-booking` after the user selects an option and wants to verify price, continue booking, create an order, or pay.
-- Use `travelkit-flight-aftercare` for order status, cancellation, itinerary, refund, or change workflows.
-- Use `travelkit-agent-integration` for technical integration policy and global TravelKit MCP safety rules.
+- Search / compare flights → `references/flight-search.md`
+- Verify real-time price → `references/flight-verify.md`
+- Collect passengers, create order → `references/flight-create-order.md`
+- Pay → `references/flight-pay-order.md`
+- Order lookup / cancel / refund / change / itinerary → respective `references/flight-*.md`
+- MCP setup and global safety policy → `references/mcp-connection.md`, `tool-categories.md`, `hidden-fields.md`, `confirmation-rules.md`, `output-rules.md`
 
-The workflow skills are designed to keep internal MCP fields hidden from normal users and to require explicit confirmation before every state-changing operation.
+All ref files keep internal MCP fields hidden and require explicit confirmation before every state-changing operation.
 
 Set `TRAVELKIT_API_KEY` as the Bearer Token in the `Authorization` header.
 
@@ -57,14 +61,24 @@ Set `TRAVELKIT_API_KEY` as the Bearer Token in the `Authorization` header.
 
 ```text
 skills/
-  travelkit-agent-integration/
+  travelkit/
     SKILL.md
-  travelkit-flight-aftercare/
-    SKILL.md
-  travelkit-flight-booking/
-    SKILL.md
-  travelkit-flight-shopping/
-    SKILL.md
+    references/
+      flight-search.md
+      flight-pricing.md
+      flight-verify.md
+      flight-create-order.md
+      flight-pay-order.md
+      flight-order-lookup.md
+      flight-cancel.md
+      flight-refund.md
+      flight-change.md
+      flight-itinerary.md
+      mcp-connection.md
+      tool-categories.md
+      hidden-fields.md
+      confirmation-rules.md
+      output-rules.md
 ```
 
 ## Contributing
