@@ -93,34 +93,15 @@ Connect to the remote MCP server via HTTP POST with signature authentication.
 **Required Headers:**
 - `Content-Type: application/json`
 - `Accept: application/json, text/event-stream`
-- `code: {CODE}` - your merchant code
-- `timestamp: {TS}` - Unix timestamp in seconds
-- `signature: {SIG}` - SHA1(CODE+TS+API_KEY)
-
-**Generate Signature:**
-
-Use `scripts/local_sign.sh` to generate timestamp and signature:
-
-```bash
-TRAVELKIT_API_KEY="<your-api-key>" ./skills/travelkit-agent-integration/scripts/local_sign.sh
-# Output:
-# TS=1778328000
-# SIG=7cf98d3bcc14818b19ef56025cbcc2343d110560
-```
-
-The script derives `CODE` from the first 6 characters of `TRAVELKIT_API_KEY` and `API_KEY` from the remainder.
+- `Authorization: Bearer {TRAVELKIT_API_KEY}`
 
 **Example Request:**
 
 ```bash
-eval "$(TRAVELKIT_API_KEY="${TRAVELKIT_API_KEY}" ./skills/travelkit-agent-integration/scripts/local_sign.sh)"
-
 curl -X POST https://mcp.travelkit.ai/mcp \
   -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" \
-  -H "code: ${CODE}" \
-  -H "timestamp: ${TS}" \
-  -H "signature: ${SIG}" \
+  -H "Authorization: Bearer ${TRAVELKIT_API_KEY}" \
   -d '{
     "jsonrpc": "2.0",
     "method": "tools/call",
@@ -140,8 +121,7 @@ curl -X POST https://mcp.travelkit.ai/mcp \
 
 **Security Notes:**
 - Do not place real `TRAVELKIT_API_KEY` values in `SKILL.md`, examples, logs, or user-facing messages
-- Do not expose raw signatures to normal users unless doing technical integration work
-- Timestamp expires after a short period; regenerate for each request batch
+- The server automatically derives authentication credentials from the Bearer Token
 
 It is safe to show user-facing business information when returned:
 

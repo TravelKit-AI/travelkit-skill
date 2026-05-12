@@ -98,6 +98,4 @@ skills/travelkit/
 │   ├── flight-booking.md         # Booking and payment workflow
 │   ├── flight-aftercare.md       # Order management workflow
 │   └── agent-integration.md      # Technical integration guide
-└── scripts/
-    └── local_sign.sh             # Signature generation helper
 ```

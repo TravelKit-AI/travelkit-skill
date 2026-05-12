@@ -43,18 +43,7 @@ After installation, load or invoke the relevant skill from an agent task:
 
 The workflow skills are designed to keep internal MCP fields hidden from normal users and to require explicit confirmation before every state-changing operation.
 
-## Local Signing Helper
-
-`skills/travelkit-agent-integration/scripts/local_sign.sh` generates a timestamp and SHA1 signature for local testing.
-
-```bash
-TRAVELKIT_API_KEY="<your-api-key>" \
-  skills/travelkit-agent-integration/scripts/local_sign.sh
-```
-
-The script derives `CODE` from the first 6 characters of `TRAVELKIT_API_KEY` and `API_KEY` from the remainder.
-
-Do not commit real `TRAVELKIT_API_KEY` values, signatures, access tokens, order payloads, passenger documents, or logs containing personal information.
+Set `TRAVELKIT_API_KEY` as the Bearer Token in the `Authorization` header.
 
 ## Safety Principles
 
@@ -70,7 +59,6 @@ Do not commit real `TRAVELKIT_API_KEY` values, signatures, access tokens, order 
 skills/
   travelkit-agent-integration/
     SKILL.md
-    scripts/local_sign.sh
   travelkit-flight-aftercare/
     SKILL.md
   travelkit-flight-booking/
