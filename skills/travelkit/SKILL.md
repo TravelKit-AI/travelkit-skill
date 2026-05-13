@@ -68,7 +68,7 @@ This skill is organized into four specialized workflow modules, each further bro
 - 用户已知航班号，查询该航班票价 → [flight-pricing](references/flight-pricing.md)
 
 ### Flight Booking
-- 用户选定 F1/F2 等选项，验证实时价格 → [flight-verify](references/flight-verify.md)
+- 用户选定 1/2 等数字选项，验证实时价格 → [flight-verify](references/flight-verify.md)
 - 验价通过，收集乘客信息并创建订单 → [flight-create-order](references/flight-create-order.md)
 - 订单已创建，用户要求支付 → [flight-pay-order](references/flight-pay-order.md)
 

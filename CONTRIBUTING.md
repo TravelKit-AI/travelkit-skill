@@ -10,7 +10,7 @@ Thanks for improving TravelKit Skill. This repository contains Codex skill instr
 
 ## Skill Boundaries
 
-- `travelkit-flight-shopping`: search, comparison, recommendation, and visible `F1`-`F5` option labels.
+- `travelkit-flight-shopping`: search, comparison, recommendation, and visible `1`-`5` option labels without an F prefix.
 - `travelkit-flight-booking`: price verification, passenger collection, order creation, and payment confirmation.
 - `travelkit-flight-aftercare`: order lookup, itinerary download, cancellation, refund, and change workflows.
 - `travelkit-agent-integration`: global TravelKit MCP safety, privacy, hidden-field, confirmation, raw-JSON, and signing policy.

@@ -47,4 +47,4 @@
 | 用户描述出行需求，需要搜索方案 | `flight_search` |
 | 用户已知具体航班号，查询该航班票价 | `flight_pricing` |
 
-用户在 `flight_search` 结果中选定 F1/F2 等选项后，**不使用** `flight_pricing`，而是直接调用 `flight_verify_solution`。
+用户在 `flight_search` 结果中选定 `1`/`2` 等数字选项后，**不使用** `flight_pricing`，而是直接调用 `flight_verify_solution`。
