@@ -6,6 +6,7 @@ This project follows a lightweight changelog format. Add entries under `Unreleas
 
 ## Unreleased
 
+- Add Known Issues documentation for v1 cross-agent behavior gaps.
 - Document v1 skill core capabilities and usage boundaries in the README.
 - Add open source project documentation, license, security policy, contribution guide, and GitHub templates.
 

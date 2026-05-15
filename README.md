@@ -27,6 +27,10 @@ The first version of the `travelkit` skill covers the full consumer flight lifec
 | **Order Aftercare** | Look up order details or lists, cancel eligible orders, quote/request refunds, search/submit changes, and download itineraries. |
 | **Agent Integration** | Document MCP connection requirements, read/write tool categories, hidden fields, confirmation rules, and consumer-facing output rules. |
 
+## Known Issues
+
+See [Known Issues](KNOWN_ISSUES.md) for current v1 cross-agent behavior gaps and result-handling issues.
+
 ## Usage Boundaries
 
 Use the skill for TravelKit flight workflows only. It is not a standalone API client and does not replace the TravelKit MCP server or its live availability, pricing, ticketing, and policy responses.
