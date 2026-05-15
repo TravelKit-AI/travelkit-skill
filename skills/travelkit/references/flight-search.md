@@ -1,182 +1,70 @@
 # flight-search ref
 
-## flight_search
+Use `flight_search` when the user describes a route/date preference and needs available flight options. If the user provides a complete flight number + airports + date + cabin, use `flight_pricing` instead.
 
-通过 TravelKit MCP 搜索可订机票，返回多个航班选项供用户比较。
+## Search Inputs
 
-### 何时使用
+Collect only:
 
-- 用户描述出行需求（路线、日期、人数、舱位、偏好）时
-- 需要展示多个候选方案供比较时
-- **不用于**：用户已明确提供完整航班号 + 机场 + 日期 + 舱位时，那种情况改用 `flight_pricing`
+- origin/destination city or airport
+- departure date, and return date if any
+- adult/child/infant counts; default to 1 adult
+- cabin class; default to economy
+- preferences: nonstop, baggage, airline include/exclude, price cap, departure/arrival time window, max duration
 
-### 前置信息收集
+Do not collect passenger ID/passport, phone, email, birthday, or name during search. Convert relative dates to `YYYY-MM-DD` using the current date/timezone. If route or date is missing, ask briefly.
 
-搜索前仅收集以下信息，**不收集证件、手机号、邮箱等乘客信息**：
+## Tool Use
 
-- 出发城市或机场
-- 到达城市或机场
-- 出发日期（`YYYY-MM-DD`）
-- 返程日期（往返时）
-- 成人/儿童/婴儿人数（省略时默认 1 名成人）
-- 舱位等级（省略时默认经济舱）
-- 用户偏好：直飞、行李额、航司、最高价格、出发时间段、到达时间段、最长飞行时长
+- Pass airport-level constraints directly in `journeys[].origin` / `journeys[].destination` when the user specifies an airport such as PEK, PKX, PVG, or SHA.
+- Pass airline constraints with `includeAirlines` or `excludeAirlines` when the user clearly specifies airlines.
+- Use `maxSegments: 1` for "直飞/不要转机"; otherwise omit unless the user sets a stop limit.
+- For multiple outbound/return date choices and "cheapest combination" style requests, search each candidate one-way date in parallel and combine locally by total price after filtering. Use multi-journey round-trip search only when the user explicitly wants a single round-trip fare/order or supplier round-trip pricing is required.
 
-出发地或日期缺失时，先问清楚再搜索。城市有多个机场且意图不明时，简短确认。
+## Mandatory Post-Filtering
 
-如果用户明确指定机场，例如 `北京首都` / `PEK`、`北京大兴` / `PKX`、`上海浦东` / `PVG`、`上海虹桥` / `SHA`，必须记录为机场级约束，而不是只当作城市偏好。调用 `flight_search` 时尽量使用对应机场码作为 `journeys[].origin` 或 `journeys[].destination`；如果工具仍返回同城其他机场方案，展示前继续按指定机场过滤。
+Filter `data.displayOptions` before showing anything:
 
-如果用户明确指定航空公司，例如"只要国航 / CA"、"指定全日空 / NH"、"不要东航 / MU"，必须记录为航司级约束。明确包含航司时，调用 `flight_search` 优先使用 `includeAirlines`；明确排除航司时，优先使用 `excludeAirlines`。如果工具仍返回不符合航司约束的方案，展示前继续按航司过滤。
+- Airport constraints are hard constraints. Match by actual route IATA code, not by city code alone. If the user specified PEK, exclude PKX and any option whose route cannot confirm PEK.
+- For outbound airport constraints, match the first route departure. For arrival airport constraints, match the last route arrival. Apply this per journey for round-trip or multi-city.
+- Airline constraints match IATA airline code in every displayed flight. Exclude unclear code-share options if they cannot be confirmed.
+- If filtering leaves no options, do not show same-city alternatives automatically. Ask whether to relax the airport or airline constraint.
+- Never expose filtered-out internal IDs, `solutionId`, raw JSON, or MCP fields.
 
-### 参数说明
+## Ranking And Recommendation
 
-| 参数 | 是否必填 | 说明 |
-|------|---------|------|
-| `journeys` | 必填 | 行程段数组，每段含 `origin`、`destination`、`departureDate` |
-| `adult` | 必填 | 成人人数 |
-| `child` | 可选 | 儿童人数 |
-| `infant` | 可选 | 婴儿人数 |
-| `cabinClass` | 可选 | `economy` / `business` / `first` |
-| `directOnly` | 可选 | 仅搜直飞 |
-| `maxPrice` | 可选 | 最高价格（CNY） |
+- Default display: up to 5 options after filtering.
+- For the user's requested objective, rank first by hard constraints, then price, then time-window comfort, then duration/stops.
+- Mark one recommendation below the table and briefly state why, such as cheapest, fastest, least hassle, or better timing.
+- If a cheaper option violates a soft preference (for example too early/late), mention it separately only when useful.
 
-相对日期（"明天"、"下周五"）需用当前日期转换为 `YYYY-MM-DD`。
+## Display Format
 
-### 结果展示规则
-
-**默认展示 5 个选项**，不足 5 个时全部展示。标签为 `1`～`5`，不要添加 `F` 前缀。
-
-展示前先按用户指定的机场过滤结果：
-
-- 机场匹配以 IATA 机场码为准，机场中文名仅用于识别和展示
-- 用户指定出发机场时，只保留首段出发机场匹配的方案
-- 用户指定到达机场时，只保留末段到达机场匹配的方案
-- 往返或多程时，每个 journey 分别按该段用户指定的机场约束过滤
-- 中转机场默认不参与过滤，除非用户明确指定"必须从某机场中转"或"不要从某机场中转"
-- 如果工具结果没有足够机场字段判断是否匹配，不要把该方案展示为确定匹配；说明返回数据不足以确认是否符合指定机场
-- 如果过滤后没有方案，不自动展示同城其他机场；说明：`按你指定的 {机场名/IATA} 没有查到可售方案。是否要我放宽到同城其他机场再看？`
-- 不暴露被过滤掉的内部方案 ID、`solutionId` 或原始 JSON
-
-展示前再按用户指定的航司过滤结果：
-
-- 航司匹配以 IATA 航司二字码为准，航空公司中文名仅用于识别和展示
-- 用户指定"只要某航司"时，只保留所有航段的营销航司都匹配该航司的方案
-- 多段/中转方案中任一航段不是指定航司，则不展示
-- 用户指定排除某航司时，任一航段命中被排除航司，则不展示
-- 如果返回了承运航司且与营销航司不一致，展示前确认是否仍符合用户"只要该航司"的意图；不确定时过滤掉或说明无法确认
-- 代码共享航班如果工具能明确返回营销/承运航司，按用户指定口径过滤；字段不足时不要展示为确定匹配
-- 如果航司过滤后没有方案，不自动展示其他航司；说明：`按你指定的 {航空公司/航司代码} 没有查到可售方案。是否要我放宽航空公司限制再看？`
-- 不暴露被过滤掉的内部方案 ID、`solutionId` 或原始 JSON
-
-每个选项必须包含（数据返回时）：
-
-- 航司和航班号
-- 路线（出发/到达城市 + 机场 + 航站楼）
-- 出发和到达时间
-- 经停数
-- 舱位
-- 价格
-
-多航段/中转方案必须准确展开每段航班信息：
-
-- "航班"列列出每段航司和航班号，如 `东方航空 MU5152 + MU583`
-- "行程"列按航段展示每段路线和机场/航站楼，如 `北京首都 PEK T2 → 上海浦东 PVG T1；上海浦东 PVG T1 → 洛杉矶 LAX TB`
-- "时间"列按航段展示每段起飞和到达时间，不能只写首段起飞到末段到达，如 `MU5152 08:30-10:05；MU583 13:05-18:35`
-- 不要只显示 `NH0964 + NH0106`、`PEK → HND → LAX` 这类仅代码压缩结果，除非工具和常用映射都无法识别名称
-- 如果跨日期，到达时间带日期标记，如 `23:50-6/17 09:40`
-- 总时长和中转次数仍保留，如 `总约16小时35分｜1次中转`
-- 如果工具返回中转等待时长，可展示为 `上海浦东中转约3小时`；未返回则不编造
-- 如果工具只返回航司或机场 IATA 代码，先用常用映射补充显示名称；仍无法确认时保留代码，不编造名称
-
-**搜索展示常用映射**（仅用于用户展示增强，不改变 MCP 参数或内部 ID）：
-
-| 代码 | 展示名称 |
-|------|----------|
-| NH | 全日空 / ANA |
-| PEK | 北京首都国际机场 |
-| HND | 东京羽田机场 |
-| NRT | 东京成田机场 |
-| LAX | 洛杉矶国际机场 |
-
-搜索结果列表中不要把行李额作为表格列或重复字段展示；如用户特别询问行李，或进入实时验价后工具返回行李信息，再单独说明。
-
-**选项推荐**：标注 1 个推荐项并说明原因，同时标出"最便宜"、"最快"、"最少折腾"。
-
-结尾提示：
-
-搜索结果末尾必须包含固定用户提示，不能只提示回复选项号：
-
-- 选择提示：`你回复 1、2 等选项号，我先帮你确认实时价格。`
-- 预订边界：`确认后如果继续预订，我再收集乘机人信息。`
-- 筛选提示：提示用户也可以继续补充筛选需求，例如航程偏好、指定航司/机场、出发时间段、价格上限或行李要求。
-- 更多结果提示：如果工具返回结果数量超过当前展示数量，追加：`如需我也可以继续展示更多航班。`
-- 更多结果提示只说明可以继续展示更多航班，不要在用户可见话术中说明当前展示数量或使用"只展示 N 个"这类表达
-- 无更多结果时：如果工具返回结果数量少于或等于当前展示数量，不要暗示还有更多航班，但仍必须保留筛选提示。
-- **不要**问用户提供航班号，不要在搜索阶段收集证件、手机、邮箱等乘客信息。
-
-标准结尾示例（有更多结果）：
-
-> 你回复 1、2 等选项号，我先帮你确认实时价格。确认后如果继续预订，我再收集乘机人信息。你也可以继续补充筛选需求，比如航程偏好、航司、机场、时间段、价格上限或行李要求。如需我也可以继续展示更多航班。
-
-标准结尾示例（无更多结果）：
-
-> 你回复 1、2 等选项号，我先帮你确认实时价格。确认后如果继续预订，我再收集乘机人信息。你也可以继续补充筛选需求，比如航程偏好、航司、机场、时间段、价格上限或行李要求。
-
-内部 `solutionId` 与选项标签的映射**永远不暴露给用户**。
-
-### 输出格式
-
-**Markdown 渠道**（Codex、OpenClaw、QQBot、网页聊天、本地测试等）使用比较表格：
-
-**Markdown 表格硬性列规则**：
-
-- 表格必须严格使用 6 列：`选项 | 航班 | 行程 | 时间 | 舱位 | 价格`
-- 每一行必须严格对应 6 个单元格，不能多列、少列或把内容放错列
-- `选项`列只能写纯数字标签，如 `1`、`2`、`3`；不能写 `推荐`、航司、航班号、价格、机场或其他说明
-- `航班`列只写航司名和航班号，如 `厦门航空 MF8561`
-- `行程`列只写路线、机场和航站楼，如 `北京大兴 PKX → 上海浦东 PVG T2`
-- `时间`列只写起降时间、直飞/中转信息和总时长，如 `07:50-09:45｜直飞约1小时55分`
-- 推荐标签和推荐理由必须放在表格下方单独说明，例如：`我推荐 1：目前最便宜，且飞行时间较短。`
-- 禁止在 Markdown 表格中写成 `| 1 推荐｜厦门航空 MF8561 | ... |`，这会导致选项、航班和后续列整体错位
+Use Markdown table for normal chat channels:
 
 ```markdown
 | 选项 | 航班 | 行程 | 时间 | 舱位 | 价格 |
 |---|---|---|---|---|---:|
-| 1 | 东方航空 MU6303 | 大兴 PKX → 广州 CAN | 08:15-11:35 | 经济舱 | ¥870 |
-| 2 | 东方航空 MU5152 + MU583 | 北京首都 PEK T2 → 上海浦东 PVG T1；上海浦东 PVG T1 → 洛杉矶 LAX TB | MU5152 08:30-10:05；MU583 13:05-18:35｜总约16小时35分｜1次中转 | 经济舱 | ¥3143 |
-| 3 | 全日空 NH0964 + NH0106 | 北京首都 PEK → 东京羽田 HND；东京羽田 HND → 洛杉矶 LAX | NH0964 08:20-12:30；NH0106 16:25-18:50｜总约19小时10分｜1次中转 | 经济舱 | ¥6470 |
+| 1 | 中国国航 CA1714 | 北京首都 PEK T3 → 杭州 HGH T4 | 12:30-14:40｜直飞约2小时10分 | 经济舱 | ¥790 |
 ```
 
-表格下方 2-3 行简短推荐说明，然后必须按上方"结尾提示"输出完整用户提示：回复选项标签、实时验价、继续预订前再收集乘机人信息、可继续筛选。若还有未展示的结果，再提示可继续展示更多航班。
+Rules:
 
-**纯文本渠道**（SMS、已知不渲染表格的渠道）使用紧凑块格式：
+- Exactly 6 columns: `选项 | 航班 | 行程 | 时间 | 舱位 | 价格`.
+- Option labels are plain numbers only; keep recommendation text outside the table.
+- For multi-segment flights, list every flight and every segment in the same row, and include total duration/stops.
+- Show cross-date arrivals with the arrival date, for example `23:50-6/17 09:40`.
+- Do not add baggage as a table column. Mention baggage only if the user asks or the verified result returns it.
+- If only IATA codes are returned, expand common airports when known; otherwise keep the code and do not invent names.
 
-```
-1 推荐｜川航 3U8830 + 3U3937｜PEK → CKG → BKK
-时间：3U8830 10:55-13:50；3U3937 15:20-18:55｜总约8小时｜1次中转
-价格：¥1711
-```
+## Required Search Footer
 
-渠道不明时默认使用表格格式。
+End search results with this meaning, concise wording allowed:
 
-### 推荐语言风格
+> 你回复 1、2 等选项号，我先帮你确认实时价格。确认后如果继续预订，我再收集乘机人信息。你也可以继续补充筛选需求，比如航程偏好、航司、机场、时间段、价格上限或行李要求。
 
-使用普通消费者语言，突出实用对比：
+If more filtered options exist beyond those shown, add: `如需我也可以继续展示更多航班。`
 
-- "最便宜"——最低价格
-- "最快"——总飞行时间最短
-- "最少折腾"——直飞或低风险行程
-- "时间更舒服"——出发/到达时间合理
-- "行李更友好"——行李额明显更好（数据返回时）
+## Handoff
 
-保留权衡可见性，例如说明最便宜选项有长时中转、到达时间晚、或未返回行李信息。
-
-### 交接至 flight-verify
-
-用户选定方案后，切换到价格验证流程（`flight_verify_solution`）。
-
-措辞示例：
-
-> 我先帮你确认 2 的实时价格。确认后如果你要继续预订，我再收集乘机人信息。
-
-**不要**在此步骤使用"下单"、"付款"、"预订哪个航班号"等字眼。
+When the user selects an option, use the private option-to-`solutionId` mapping with `flight_verify_solution`. Say you will confirm the real-time price first; do not call it "下单" or "付款" at this stage.
