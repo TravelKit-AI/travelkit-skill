@@ -15,6 +15,35 @@ One skill (`travelkit`) with 15 per-tool reference files organized into four wor
 | **Flight Aftercare** | `flight-order-lookup`, `flight-cancel`, `flight-refund`, `flight-change`, `flight-itinerary` |
 | **Agent Integration** | `mcp-connection`, `tool-categories`, `hidden-fields`, `confirmation-rules`, `output-rules` |
 
+## Core Capabilities
+
+The first version of the `travelkit` skill covers the full consumer flight lifecycle through TravelKit MCP tools:
+
+| Capability | What It Supports |
+|---|---|
+| **Flight Shopping** | Search and compare available flights, price a known flight number, apply airport/airline/time/stop preferences, and present user-facing options. |
+| **Flight Booking** | Verify real-time price for a selected option, collect required passenger details at the correct stage, and create an order after explicit confirmation. |
+| **Payment Safety** | Present supported payment choices, require explicit payment confirmation, and verify order state after payment attempts. |
+| **Order Aftercare** | Look up order details or lists, cancel eligible orders, quote/request refunds, search/submit changes, and download itineraries. |
+| **Agent Integration** | Document MCP connection requirements, read/write tool categories, hidden fields, confirmation rules, and consumer-facing output rules. |
+
+## Usage Boundaries
+
+Use the skill for TravelKit flight workflows only. It is not a standalone API client and does not replace the TravelKit MCP server or its live availability, pricing, ticketing, and policy responses.
+
+| Area | Use When | Do Not Use When |
+|---|---|---|
+| **Search / compare** | The user gives a route, date, passenger count, cabin, or preferences and wants flight options. | The user already provided a complete flight number, airports, date, and cabin; use pricing instead. |
+| **Known-flight pricing** | The user asks for the price of a specific flight number with enough route/date/cabin detail. | The user is still exploring routes, dates, airlines, or airports. |
+| **Price verification** | The user selects a numbered search/pricing option and wants to continue. | The user has not selected a concrete option. |
+| **Order creation** | Price verification has passed, required passenger/contact details are collected, and the user explicitly confirms order creation. | During search, before real-time price verification, or without explicit confirmation. |
+| **Payment** | An order exists and the user explicitly confirms a payment method and amount. | The user only says they may book, or payment details are ambiguous. |
+| **Cancellation** | The user wants to cancel an unpaid or cancelable order and explicitly confirms the target order. | The order is ticketed and needs refund handling instead. |
+| **Refund** | The user wants to refund ticketed segments and the agent can quote/confirm refund details first. | The user has not selected passengers/segments or has not confirmed the refund request. |
+| **Change** | The user wants to change ticketed flights, reviews available change options, and confirms the selected option. | No valid change option has been returned or selected. |
+| **Itinerary** | The user asks for an itinerary document for an existing order. | The user is asking for booking confirmation or ticket issuance status; use order lookup first. |
+| **Integration config** | Developers need MCP endpoint, auth/header requirements, hidden-field policy, or confirmation behavior. | The request requires credentials, live passenger data, or exposing internal MCP fields to normal users. |
+
 ## Requirements
 
 - An agent runtime that can load reusable instructions, skills, prompts, or policy files.
