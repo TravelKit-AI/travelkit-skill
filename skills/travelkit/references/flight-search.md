@@ -33,7 +33,7 @@ Filter `data.displayOptions` before showing anything:
 
 ## Ranking And Recommendation
 
-- Default display: up to 5 options after filtering.
+- Default display: 5 options after filtering when at least 5 are available. If fewer than 5 remain, show all available options and say only these matched the constraints.
 - For the user's requested objective, rank first by hard constraints, then price, then time-window comfort, then duration/stops.
 - Mark one recommendation below the table and briefly state why, such as cheapest, fastest, least hassle, or better timing.
 - If a cheaper option violates a soft preference (for example too early/late), mention it separately only when useful.
@@ -52,7 +52,7 @@ Rules:
 
 - Exactly 6 columns: `选项 | 航班 | 行程 | 时间 | 舱位 | 价格`.
 - Option labels are plain numbers only; keep recommendation text outside the table.
-- For multi-segment flights, list every flight and every segment in the same row, and include total duration/stops.
+- For multi-segment flights, list every returned flight number and every segment in the same row, and include total duration/stops. If segment or flight number data is absent, say the tool did not return it; do not say there is no segment.
 - Show cross-date arrivals with the arrival date, for example `23:50-6/17 09:40`.
 - Do not add baggage as a table column. Mention baggage only if the user asks or the verified result returns it.
 - If only IATA codes are returned, expand common airports when known; otherwise keep the code and do not invent names.
@@ -66,5 +66,7 @@ End search results with this meaning, concise wording allowed:
 If more filtered options exist beyond those shown, add: `如需我也可以继续展示更多航班。`
 
 ## Handoff
+
+When no result is returned for multi-city or multi-segment searches, retry only if there is a clear narrower interpretation (for example split by journey date). Otherwise explain no matching result was returned and ask whether to relax date, airport, airline, cabin, or nonstop constraints.
 
 When the user selects an option, use the private option-to-`solutionId` mapping with `flight_verify_solution`. Say you will confirm the real-time price first; do not call it "下单" or "付款" at this stage.

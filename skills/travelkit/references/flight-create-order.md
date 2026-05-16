@@ -2,31 +2,23 @@
 
 ## flight_create_order
 
-收集完整乘客信息后，经用户明确确认，创建机票订单。
+价格验证通过且用户确认继续后，收集乘客信息；下单前再次明确确认，创建订单但不自动支付。
 
-### 何时使用
+### When to use
 
-价格验证通过（`flight_verify_solution`）且用户明确表示要继续预订后，进入此流程。
+Use after `flight_verify_solution` succeeds and the user says they want to continue booking. Do not collect ID, passport, phone, or email before this point.
 
-### 证件要求说明
+### Passenger collection prompt
 
-收集乘客信息前，根据航线类型主动告知证件要求。
+Before collecting details, briefly state the document type needed. For Hong Kong/Macau/Taiwan routes or unclear route types, ask which valid travel document the passenger will use. Use natural Chinese + Markdown bullets, not code blocks or blank forms.
 
-**国内航班**：
-> 这趟是国内航班，下单需要乘机人身份证信息。
+Domestic mainland flights default to the ID-card Chinese-name template. Do not ask for pinyin or English surname/given names for domestic ID-card passengers. Use the passport English-name template only for international routes or passport/English-name document scenarios.
 
-**国际航班**：
-> 这趟是国际航班，下单需要护照信息。请确保护照英文名（拼音）、护照号和有效期准确。
+When using a fixed prompt below, output it verbatim: do not rewrite it, compress it into one line, merge fields, remove fields, or change field order.
+Do not add examples, placeholders, date formats, or sample values to the fixed prompt. In particular, the birthday field must be exactly `- 出生日期`; never append any date example or format hint.
+Do not narrow passenger type choices based on the searched passenger count. The passenger type field must always be exactly `- 乘客类型：成人 / 儿童 / 婴儿`, even when the current request is for one adult.
 
-港澳台路线不默认使用大陆身份证，询问乘客持有的有效旅行证件（港澳通行证、台湾通行证、回乡证、台胞证或护照）。
-
-路线类型不明时，询问乘客计划使用哪种证件。
-
-### 乘客信息收集
-
-用自然的中文文字 + Markdown 列表提示，**不使用**代码块、灰色表单块或空白模板。
-
-**国内航班**收集字段：
+**Domestic fixed prompt - must output verbatim**:
 
 > 这趟是国内航班，后续需要乘机人身份证信息。请把下面信息发我，我再帮你创建订单，但不会自动支付：
 > 中文姓名我会按证件姓名识别姓、名；如果复姓或拆分不确定，我再单独确认。
@@ -41,7 +33,10 @@
 - 乘机人手机号
 - 乘机人邮箱
 
-**国际航班**收集字段：
+**International fixed prompt - must output verbatim**:
+
+> 这趟是国际航班，后续需要乘机人护照信息。请把下面信息发我，我再帮你创建订单，但不会自动支付：
+> 护照英文姓和英文名需要与护照完全一致。
 
 - 护照英文姓 / surname
 - 护照英文名 / given names
@@ -54,71 +49,35 @@
 - 乘机人手机号
 - 乘机人邮箱
 
-**每位乘客均必须收集**：手机号、邮箱、证件类型、证件号码，不得省略。
+Every passenger must have phone, email, document type, and document number. ID card, Mainland Travel Permit, and Taiwan Travel Permit names use Chinese as shown on the document; passports use the passport English name. For ID-card passengers, ask users for one Chinese full name and split internally; ask only when compound surname, ethnic/minority name, English name, very long name, or rare characters make the split uncertain.
 
-**根据证件类型区分姓名要求**：
-- **护照**：使用英文名（拼音），需与护照上完全一致
-- **身份证、港澳通行证、台湾通行证**：使用中文姓名，与证件上完全一致
+If contact name/phone is absent, default to the first passenger's name and phone, mention this briefly before order creation, and do not collect contact email.
 
-**国内中文姓名自动拆分**：
-- 国内大陆航班使用身份证时，面向用户只收集一个中文"乘机人姓名"，例如 `张三`；不要要求用户分别填写 surname / given names
-- 中国居民身份证乘客的姓名字段必须使用中文汉字，与证件姓名一致；不要传拼音或英文名
-- 内部传参按中文姓名拆分姓和名：常规中文姓名按首字为姓、其余为名，例如 `张三` → surname `张`，givenNames `三`
-- 优先识别常见复姓，例如 `欧阳娜娜` → surname `欧阳`，givenNames `娜娜`
-- 例如 `梁嘉航` 应传 surname `梁`，givenNames `嘉航`，不要传 `LIANG` / `JIAHANG`
-- 少数民族姓名、英文名、超长姓名、罕见字姓名，或无法确定拆分时，先询问用户确认姓和名
-- 拼音仅用于护照/英文姓名场景，或非身份证证件明确需要英文姓名时；身份证场景不要为了拼音读音问题打断用户
+### Confirmation before creation
 
-**联系人信息**（可选）：
-- 用户未提供联系人姓名和联系电话时，默认使用第一位乘客的姓名和手机号
-- 创建订单前简短告知此默认值
-- **不收集**联系人邮箱
+Before `flight_create_order`, summarize flight/route, departure and arrival time, passengers, contact info including defaults, final price, and important tool-returned notices.
 
-### 下单前确认
-
-调用 `flight_create_order` 前，用普通语言重述：
-
-- 航班和路线
-- 出发和到达时间
-- 乘机人姓名
-- 联系信息（含默认值说明）
-- 最终价格
-- 工具返回的重要注意事项
-
-询问：
+Ask:
 > 确认后我会为你创建订单，但不会自动支付。是否确认创建？
 
-**只有用户明确确认后**才调用 `flight_create_order`。
+Call `flight_create_order` only after explicit confirmation. Use the verified `orderKey`; set all required internal confirmation fields in the tool call without mentioning production or technical flags to the user.
 
-### 工具调用注意事项
+### After creation
 
-- 传入已验证的 `orderKey`
-- 用户对上述创建订单内容明确确认后，内部一次性设置工具要求的所有确认字段，包括创建订单确认、外部订单号确认和生产写入确认
-- 创建订单只向用户确认一次；不要因为内部确认字段再次要求用户确认"生产环境"、"生产写入"或类似技术/环境信息
-- 生产环境确认字段是内部安全字段，普通用户不可见，不得出现在面向用户的话术中
+After success, call `flight_order_detail` when useful and show this fixed order summary:
 
-### 订单创建后
+- 订单号
+- 订单状态 / 支付状态 / 出票状态
+- 支付截止时间或出票相关时间
+- 乘客
+- 航段和航班号
+- 金额
+- 下一步
 
-订单创建成功后，调用 `flight_order_detail` 展示当前订单状态（当有参考价值时）。
+Deadlines must come from explicit tool fields. If missing, say: `支付截止时间：暂未返回，请尽快完成支付；支付前我会再次核查订单状态。`
 
-展示订单创建结果时，优先从 `flight_order_detail` 读取支付或出票截止时间，不只依赖 `flight_create_order` 响应。
+If unpaid, prompt payment options without balance payment: domestic uses 微信、支付宝、信用卡、借记卡; international/cross-border can also include Airwallex.
 
-- 如果返回明确的支付截止时间，展示为：`支付截止时间：2026-05-14 20:05（当地时间）`
-- 如果返回明确的出票截止时间或出票保证相关时间，按工具含义展示为出票相关时间
-- 截止时间必须来自工具返回的明确字段，且应包含时区或清楚说明为当地时间
-- 如果创建订单和订单详情都未返回明确截止时间，不要根据起飞时间、订单状态或经验规则推算；面向用户说：`支付截止时间：暂未返回，请尽快完成支付；支付前我会再次核查订单状态。`
-- 不要对普通用户使用技术化的截止时间缺失话术
-- 创建成功且尚未支付时，下一步提示用户可选支付方式；不要说"余额支付"或笼统说"余额支付或第三方支付"
-- 国内机票提示：`下一步如需支付，请告诉我支付方式。可选微信、支付宝、信用卡、借记卡；我会在支付前再次向你确认金额和订单号。`
-- 国际机票提示：`下一步如需支付，请告诉我支付方式。可选 Airwallex、微信、支付宝、信用卡、借记卡；我会在支付前再次向你确认金额和订单号。`
-- 如果航线类型无法确定，默认按国内机票支付方式提示；如订单详情明确为国际或跨境航线，再加入 Airwallex
+### Errors
 
-> `flight_order_detail` 在此流程中仅用于创建订单或支付流程内的状态核查。独立订单查询、售后问题、取消、退票、改签、行程单下载属于 aftercare 流程。
-
-### 错误处理
-
-订单创建失败时，简短说明原因，仅询问缺失或需更正的信息，不重复要求用户提交全部信息。
-
-- 如果工具或订单详情返回姓名、`FirstName`、`LastName`、身份证姓名、ID card full name 等相关异常，说明是证件姓名格式不符合供应商要求
-- 身份证姓名异常通常应改用中文汉字姓名重新验价并创建订单；不要归因于价格或余位问题
-- 如果异常订单未支付、未出票，说明当前订单不能继续支付或出票；重新下单前先重新验价，再用正确姓名格式创建新订单
+On failure, briefly explain and ask only for missing or corrected fields. Name-related errors (`FirstName`, `LastName`, ID-card full name, etc.) mean the document-name format does not meet supplier requirements; do not blame price or inventory. If an abnormal order is unpaid and unticketed, re-verify price before creating a corrected new order.
