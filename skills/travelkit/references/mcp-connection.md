@@ -45,6 +45,20 @@ curl -X POST https://mcp.travelkit.ai/mcp \
 - **不要**将真实的 `TRAVELKIT_API_KEY` 写入 `SKILL.md`、示例、日志或用户可见的消息中
 - 服务器会自动从 Bearer Token 中派生认证凭据
 
+### Missing API Key / Auth Failure
+
+当宿主 Agent 没有配置 `TRAVELKIT_API_KEY`，或 MCP 调用因为 API key 缺失、无效、过期、未配置、认证失败或授权失败而不可用时，不要让用户卡住，也不要要求用户在聊天中粘贴 API key、Bearer token 或任何凭证。
+
+面向普通消费者时，使用：
+
+> 当前 TravelKit 服务尚未完成连接配置，请联系服务管理员配置 API Key 后再试。
+
+面向开发者或集成方时，使用：
+
+> 当前 TravelKit MCP 未配置有效的 `TRAVELKIT_API_KEY`。请前往 https://www.travelkit.ai/ 注册或获取 API key，并在 Agent/MCP 运行环境中配置后再试。不要在聊天中粘贴 API key。
+
+不得暴露内部堆栈、Token、签名、请求头、原始 MCP JSON 或认证错误原文。
+
 ### MCP Prompt 独立性
 
 **不依赖** TravelKit MCP 服务器 prompt 被加载。

@@ -55,7 +55,13 @@ If contact name/phone is absent, default to the first passenger's name and phone
 
 ### Confirmation before creation
 
-Before `flight_create_order`, summarize flight/route, departure and arrival time, passengers, contact info including defaults, final price, and important tool-returned notices.
+Before `flight_create_order`, summarize flight/route, departure and arrival time, passengers, contact info including defaults, final price, and important tool-returned notices. Final price follows the shared amount rule: total price = fare + tax.
+
+The amount line in the pre-creation confirmation summary must use this single-line format:
+
+> 金额：¥{总价}（票面价 ¥{票面价} + 税价 ¥{税价}）
+
+Do not use an equation-style amount line or split the pre-creation confirmation amount into separate fare/tax/total lines.
 
 Ask:
 > 确认后我会为你创建订单，但不会自动支付。是否确认创建？
@@ -64,17 +70,11 @@ Call `flight_create_order` only after explicit confirmation. Use the verified `o
 
 ### After creation
 
-After success, call `flight_order_detail` when useful and show this fixed order summary:
+After success, call `flight_order_detail` when useful and show the fixed order information template from `output-rules`. The user-facing order summary must include order info, passengers, segments, amount, and next step in that exact template order.
 
-- 订单号
-- 订单状态 / 支付状态 / 出票状态
-- 支付截止时间或出票相关时间
-- 乘客
-- 航段和航班号
-- 金额
-- 下一步
+Deadlines must come from explicit tool fields. If missing, use the fixed deadline wording from `output-rules`.
 
-Deadlines must come from explicit tool fields. If missing, say: `支付截止时间：暂未返回，请尽快完成支付；支付前我会再次核查订单状态。`
+Amount must follow the shared amount rule: total price = fare + tax. Use returned fare and tax fields when available; for multiple passengers or segments, sum fare and tax separately before calculating total price. If the tool returns only total amount without a fare/tax split, use the fixed single amount line from `output-rules` and mark the missing split values as "未返回"; do not invent a split.
 
 If unpaid, prompt payment options without balance payment: domestic uses 微信、支付宝、信用卡、借记卡; international/cross-border can also include Airwallex.
 

@@ -8,6 +8,7 @@ Collect only:
 
 - origin/destination city or airport
 - departure date, and return date if any
+- for multi-city / 多段行程 requests, collect each leg's origin, destination, and departure date; `flight_search` supports up to 5 `journeys[]`
 - adult/child/infant counts; default to 1 adult
 - cabin class; default to economy
 - preferences: nonstop, baggage, airline include/exclude, price cap, departure/arrival time window, max duration
@@ -19,6 +20,7 @@ Do not collect passenger ID/passport, phone, email, birthday, or name during sea
 - Pass airport-level constraints directly in `journeys[].origin` / `journeys[].destination` when the user specifies an airport such as PEK, PKX, PVG, or SHA.
 - Pass airline constraints with `includeAirlines` or `excludeAirlines` when the user clearly specifies airlines.
 - Use `maxSegments: 1` for "直飞/不要转机"; otherwise omit unless the user sets a stop limit.
+- For continuous multi-city / 多段行程 requests, use one `flight_search` call with one `journeys[]` entry per leg, up to 5 legs. For example, "北京到上海再到广州" becomes `BJS -> SHA` and `SHA -> CAN` as two journeys with their own departure dates.
 - For multiple outbound/return date choices and "cheapest combination" style requests, search each candidate one-way date in parallel and combine locally by total price after filtering. Use multi-journey round-trip search only when the user explicitly wants a single round-trip fare/order or supplier round-trip pricing is required.
 
 ## Mandatory Post-Filtering
@@ -45,14 +47,20 @@ Use Markdown table for normal chat channels:
 ```markdown
 | 选项 | 航班 | 行程 | 时间 | 舱位 | 价格 |
 |---|---|---|---|---|---:|
-| 1 | 中国国航 CA1714 | 北京首都 PEK T3 → 杭州 HGH T4 | 12:30-14:40｜直飞约2小时10分 | 经济舱 | ¥790 |
+| 1 | CA1714 | 北京首都 PEK T3 → 杭州 HGH T4 | 12:30-14:40｜直飞约2小时10分 | 经济舱 | ¥790 |
 ```
 
 Rules:
 
 - Exactly 6 columns: `选项 | 航班 | 行程 | 时间 | 舱位 | 价格`.
 - Option labels are plain numbers only; keep recommendation text outside the table.
-- For multi-segment flights, list every returned flight number and every segment in the same row, and include total duration/stops. If segment or flight number data is absent, say the tool did not return it; do not say there is no segment.
+- The `航班` column shows only complete flight numbers such as `CA1714`, without Chinese or English airline names.
+- For multi-segment flights, list every returned complete flight number and every segment in the same row, and include total duration/stops. If segment or flight number data is absent, say the tool did not return it; do not say there is no segment.
+- The `行程` column for multi-segment flights keeps the route chain, for example `北京首都 PEK T3 → 香港 HKG → 曼谷 BKK`.
+- The `时间` column for direct flights keeps the compact range plus duration, for example `18:55-23:00｜直飞约5小时05分`.
+- The `时间` column for multi-segment / 中转 flights must show each segment's departure and arrival time, not only the first departure and final arrival. Use this format: `PEK→HKG 07:25-10:55；HKG→BKK 14:30-16:30｜中转1次约10小时05分`.
+- For cross-date segments, show the date on the segment time itself, for example `PEK→HKG 07:25-10:55；HKG→BKK 5/20 22:15-5/21 00:10｜中转1次约17小时45分`.
+- If a segment's departure or arrival time is not returned, do not invent it; show that segment as `{origin}→{destination} 时间未返回` and still show all other returned segment times.
 - Show cross-date arrivals with the arrival date, for example `23:50-6/17 09:40`.
 - Do not add baggage as a table column. Mention baggage only if the user asks or the verified result returns it.
 - If only IATA codes are returned, expand common airports when known; otherwise keep the code and do not invent names.

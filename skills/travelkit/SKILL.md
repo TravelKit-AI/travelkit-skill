@@ -1,6 +1,7 @@
 ---
 name: travelkit
 description: TravelKit flight booking and management skill. Use for flight search, pricing, real-time price verification, order creation, payment, cancellation, refund, change, itinerary download, and TravelKit MCP integration policy. Always use this skill for TravelKit flight lifecycle tasks.
+version: 1.0.2
 ---
 
 # TravelKit Flight Skill
@@ -28,6 +29,7 @@ Use the smallest relevant reference file for the user's current task. Keep consu
 - Search before booking; verify real-time price before collecting passenger information or creating an order.
 - Never expose internal fields such as `solutionId`, `orderKey`, confirmation flags, raw MCP JSON, API keys, `passengerIds`, `segmentIds`, or idempotency keys to normal users.
 - Never invent missing tool data. If baggage, refund/change policy, ticketing, or deadline data is absent, say it was not returned.
+- For order creation, order lookup, and post-payment checks, use the fixed order information template and amount rule in [output-rules](references/output-rules.md): total price = fare + tax.
 - Search/pricing/verify/order lookup/itinerary/change-search/refund quote are read operations and can be called as needed.
 - Create order, pay, cancel, refund request/confirm, and change request are write operations; get explicit user confirmation for the exact action first.
 - Search stage collects only route, dates, passenger counts, cabin, and preferences. Collect ID/passport/phone/email only after price verification succeeds and the user confirms they want to proceed.
@@ -38,8 +40,9 @@ Use the smallest relevant reference file for the user's current task. Keep consu
 - Defaults: 1 adult, economy, no airline restriction, no baggage guarantee unless requested.
 - If the user specifies an airport (for example PEK/北京首都), treat it as a hard airport-level constraint. Pass the airport code to `flight_search` when possible, then filter returned `displayOptions` by actual route before showing results.
 - If the user specifies include/exclude airlines, pass `includeAirlines` or `excludeAirlines` when possible, then filter by IATA airline code before showing results.
+- If the user describes a continuous multi-city route, such as "北京到上海再到广州", construct one `flight_search` request with multiple `journeys[]` entries, one per leg, up to 5 journeys.
 - For multiple outbound/return date choices where the user wants the cheapest feasible combination, search the candidate one-way dates in parallel and combine locally. Use multi-journey round-trip search only when the user explicitly needs one round-trip fare/order or the supplier requires it.
-- Show only user-facing flight facts: flight number, route/terminals, times, stops, cabin, and price. Keep option labels mapped to internal IDs privately for later verification.
+- Show only user-facing flight facts: full flight number, route/terminals, times, stops, cabin, and price. Do not add airline names before flight numbers, including Chinese or English airline names. Keep option labels mapped to internal IDs privately for later verification.
 
 ## Write Confirmation
 
