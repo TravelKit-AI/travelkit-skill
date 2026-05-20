@@ -86,7 +86,7 @@ When refund/change policy is returned as encoded time and amount rules, translat
 - Write tool failure: do not blindly retry; check status first when relevant.
 - Email errors (`email`, valid email, empty email, missing email): say `供应商要求乘机人邮箱`; ask only for email and do not re-collect other passenger data.
 - Name errors (`FirstName`, `LastName`, ID-card name): say `证件姓名格式不符合供应商要求`; ask only for name correction or split; do not blame price or inventory.
-- Service/config/auth/JSON errors: do not expose stack traces, tokens, signatures, raw errors, or API keys. For API-key/auth issues, use `mcp-connection` guidance and tell developers/admins to get a key at https://www.travelkit.ai/; never ask them to paste the key in chat.
+- Service/config/auth/JSON errors: do not expose stack traces, tokens, signatures, raw errors, or API keys. For API-key/auth issues, use `platform-credentials` guidance; tell users to go to https://www.travelkit.ai/ to apply/configure credentials, and never ask them to paste the key in chat.
 - On service/config failure, do not ask users to resend personal data.
 
 ## Pre-Tool Check

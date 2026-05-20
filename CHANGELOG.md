@@ -10,6 +10,14 @@ This project follows a lightweight changelog format. Add entries under `Unreleas
 - Add open source project documentation, license, security policy, contribution guide, and GitHub templates.
 - Remove standalone known-issues documentation and keep issue tracking in GitHub.
 
+## 1.0.4
+
+- Renamed the credential/configuration reference from `mcp-connection.md` to `platform-credentials.md`.
+- Updated API key troubleshooting to treat missing or invalid `TRAVELKIT_API_KEY` as a platform-managed credential issue.
+- Directed users to https://www.travelkit.ai/ to apply for or complete TravelKit API key configuration.
+- Prevented agents from inventing local MCP configuration snippets such as `mcpServers`, `npx`, stdio server setup, local MCP server installation, or local config JSON.
+- Clarified that API keys must not be pasted into chat, prompts, frontend pages, skill files, examples, or logs.
+
 ## 1.0.3
 
 - Added invoice application and invoice status lookup workflows.

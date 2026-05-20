@@ -1,7 +1,7 @@
 ---
 name: travelkit
 description: TravelKit flight booking and management skill. Use for flight search, pricing, real-time price verification, order creation, payment, cancellation, refund, change, itinerary download, and TravelKit MCP integration policy. Always use this skill for TravelKit flight lifecycle tasks.
-version: 1.0.3
+version: 1.0.4
 ---
 
 # TravelKit Flight Skill
@@ -23,13 +23,14 @@ Keep consumer replies in Simplified Chinese unless the user requests another lan
 | Refund | [flight-refund](references/flight-refund.md) | `flight_refund_quote`, `flight_refund_money_search`, `flight_refund_request`, `flight_refund_confirm` |
 | Change flight | [flight-change](references/flight-change.md) | `flight_change_search`, `flight_change_request` |
 | Download itinerary | [flight-itinerary](references/flight-itinerary.md) | `flight_download_itinerary` |
-| Integration/config questions | [mcp-connection](references/mcp-connection.md) | N/A |
+| API key / credential issues | [platform-credentials](references/platform-credentials.md) | N/A |
 
 ## Core Rules
 
 - Search before booking; verify real-time price before collecting passenger information or creating an order.
 - Never expose internal fields such as `solutionId`, `orderKey`, confirmation flags, raw MCP JSON, API keys, `passengerIds`, `segmentIds`, or idempotency keys to normal users.
 - Normal user-visible replies must never contain `PNR`, `airlinePnr`, airline PNR, `票号/PNR`, or `票号 / PNR`; omit or rewrite those fields even if returned, empty, or present in an error message.
+- If `TRAVELKIT_API_KEY` is missing or invalid, treat it only as a platform-managed credential issue. Never invent or output local MCP configuration snippets such as `mcpServers`, `npx`, stdio server setup, or local config JSON.
 - Never invent missing tool data. If baggage, refund/change policy, ticketing, deadline, fees, or status data is absent, say it was not returned.
 - For order creation, order lookup, and post-payment checks, use [output-rules](references/output-rules.md): total price = fare + tax.
 - Search/pricing/verify/order lookup/invoice lookup/itinerary/change-search/refund quote are read operations and can be called as needed.
