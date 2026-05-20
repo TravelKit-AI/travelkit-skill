@@ -1,31 +1,28 @@
 # output-rules ref
 
-## 面向用户的输出规则
+## User Output
 
-### 语言
+- Default to Simplified Chinese for consumers; keep tool names, MCP fields, and code identifiers in English only when needed.
+- Summarize tool results. Do not paste raw JSON, internal IDs, API keys, confirmation flags, `orderKey`, `solutionId`, `passengerIds`, or `segmentIds`.
+- Prices default to CNY. Dates/times use China-friendly wording.
+- If baggage, policy, status, fee, ticketing, or deadline data is not returned, say it was not returned. Do not invent.
+- Copyable fields such as order number, ticket number, and document tail number should stand alone without punctuation stuck to the value.
+- Never show `PNR`, `airlinePnr`, or airline PNR in normal user-visible output, including `PNR: 未返回`, `票号 / PNR`, or `票号/PNR`.
+- Before sending, delete or rewrite any field, table row, bullet, or sentence that contains `PNR` or `airlinePnr`, including status, ticketing, refund/change, and error explanations.
+- If a real ticket number is returned, show it only as `票号`; never merge ticket number and PNR into one field. If ticket number is not returned, omit the ticket-number line instead of writing that it was not returned.
 
-- 面向普通消费者**默认使用简体中文**
-- 工具名称、API 字段名、代码标识符和 MCP 参数保留英文
-- 价格默认以人民币（CNY）展示
-- 日期和时间使用中国友好格式，相对日期以中国本地时间解释
+## Flight Numbers
 
-### 内容规范
+- Show only the complete flight number returned by the tool, such as `CA1728`.
+- Do not display "airline name + flight number". Airline codes may be used internally for filtering only.
 
-- 使用自然的消费者语言，不暴露工具名称、MCP 字段名或原始 JSON（技术用户明确询问时除外）
-- 对工具结果进行摘要整理，不粘贴原始 API 响应
-- 行李、退改签、出票或政策详情工具未返回时，说明"未返回相关信息"，**不自行编造**
-- 支付或出票截止时间未返回时，不要使用技术化话术；面向用户说"暂未返回，请尽快完成支付；支付前我会再次核查订单状态"
-- 订单号、票号、PNR、证件尾号等可复制字段应单独展示；不要把 `？`、`。`、`,`、`.` 等标点紧贴在可复制字段后面
+## Order Template
 
-### 航班号展示
+Use this fixed structure for order creation success, order lookup, and post-payment status checks. Do not change titles, field names, field order, or amount format. Missing fields: `未返回`.
 
-- 面向用户展示航班时，只显示工具返回的完整航班号，例如 `CA1728`、`GJ8987`
-- 不在航班号前后添加航空公司中文名、英文名或航司名称前缀；不要使用"航司名 + 航班号"的展示格式
-- 航司 IATA 代码可用于内部筛选或理解用户偏好，但最终结果、验价摘要、订单摘要、改签选项和支付后说明都只展示完整航班号
+Only unpaid order-creation success starts with `订单已创建，尚未支付。`. For lookup or post-payment checks, describe the actual returned status instead.
 
-### 订单信息固定模板
-
-订单创建成功、订单详情查询、支付后核查订单时，必须使用以下固定模板结构；不要改写标题、字段名、字段顺序或金额口径。字段未返回时填"未返回"，不要推断或编造。订单创建成功且尚未支付时，第一句固定写作：`订单已创建，尚未支付。`
+Do not add PNR fields outside this template, even if the tool returns them. Do not mention PNR emptiness or absence in prose.
 
 ```markdown
 订单已创建，尚未支付。
@@ -50,55 +47,48 @@
 - 根据订单状态给出支付、等待出票、下载行程单、改退等下一步。
 ```
 
-订单金额展示规则：
+## Amounts
 
-- 总价 = 票面价 + 税价。
-- 优先使用工具返回的票面价和税价字段；多乘客或多航段时，分别汇总票面价和税价，再计算总价。
-- 金额必须使用单行格式：`金额：¥{总价}（票面价 ¥{票面价} + 税价 ¥{税价}）`。
-- 如果只返回总额但没有票面价或税价拆分，金额行写作：`金额：¥{总价}（票面价 未返回 + 税价 未返回）`，不要编造拆分。
-- 如果工具返回的总额与 `票面价 + 税价` 不一致，展示拆分计算出的总价，并提示"返回总额与票面价加税价不一致，我会重新核查订单金额。"
-- 支付或出票截止时间未返回时，固定写作：`最晚支付时间：暂未返回，请尽快完成支付；支付前我会再次核查订单状态。`
+- Total = fare + tax. Sum fare and tax across passengers/segments before calculating total.
+- Always use: `金额：¥{总价}（票面价 ¥{票面价} + 税价 ¥{税价}）`.
+- If only total is returned, use: `金额：¥{总价}（票面价 未返回 + 税价 未返回）`.
+- If returned total differs from fare + tax, show fare + tax total and say: `返回总额与票面价加税价不一致，我会重新核查订单金额。`
+- If payment/ticketing deadline is missing, write: `最晚支付时间：暂未返回，请尽快完成支付；支付前我会再次核查订单状态。`
 
-### 个人信息收集时机
+## Refund/Change Rule Codes（退改规则编码）
 
-| 阶段 | 是否收集个人信息 |
-|------|----------------|
-| 搜索航班 | ❌ 不收集（证件、手机、邮箱等） |
-| 价格验证通过，用户确认继续 | ✅ 开始收集乘客信息 |
+When refund/change policy is returned as encoded time and amount rules, translate it into plain Chinese before showing users:
 
-- 不猜测乘客姓名、生日、性别、证件号、手机号、邮箱或证件有效期
-- 基于用户提供的中文姓名进行姓/名拆分不属于猜测；中国居民身份证乘客使用中文汉字姓名，不转换为拼音
-- 拼音转换仅用于护照/英文姓名场景，或非身份证证件明确需要英文姓名时；不确定时只询问姓名拆分或必要的英文姓名确认，不要求用户重复提交全部乘客信息
-- 信息缺失或不明确时，仅询问缺失字段
+- `*`: 所有时间段。
+- `>n`: `n > 0` 表示起飞前 n 小时前；`n < 0` 表示起飞后 `abs(n)` 小时前。
+- `<n`: `n > 0` 表示起飞前 n 小时后；`n < 0` 表示起飞后 `abs(n)` 小时后。
+- 金额 `> 0`: 显示对应金额。金额 `0`: 免费。金额 `-1`: 按当前场景显示不可退 / 不可改。
+- Do not expose confusing negative-hour wording to users; for example `>-2` means `起飞后 2 小时前`.
+- If the rule, time condition, or amount is missing, say it was not returned and do not infer from experience.
 
-### 乘客信息收集格式
+## Low Inventory
 
-- 使用自然中文文字 + Markdown 列表
-- **不使用**代码块、灰色表单块、空白模板或原始表单格式
-- 提示应看起来像人工服务消息，而不是数据录入表单
-- 固定模板场景必须逐字使用对应模板；不要改写、压缩、合并字段或改变字段顺序
-- 固定模板不得添加示例值、占位符或格式提示；`出生日期` 不得追加日期示例，`乘客类型` 不得按当前搜索人数改成单一类型
+- Low inventory means any returned `segments[].availability <= 3`.
+- In the order template "下一步", if low inventory is known, display the remaining ticket count and remind the user to pay quickly or tickets may sell out.
+- Multi-segment: use the lowest returned availability. If availability is not returned, do not mention low inventory or invent a count.
 
-详细字段和格式见 `flight-create-order` ref。
+## Passenger Data
 
-### 错误处理输出
+- Search stage: never collect ID/passport, phone, email, birthday, or gender.
+- After verified price and user says to proceed: collect passenger data through `flight-create-order`.
+- Do not guess passenger data. Chinese name splitting from a provided legal name is allowed; if uncertain, ask only for the name split.
+- Use natural Chinese bullets, not code blocks, gray form blocks, blank templates, or raw forms.
+- Fixed collection templates in `flight-create-order` must keep their fields and order.
 
-- 读取工具失败时：简短说明，建议下一步有用操作
-- 写入工具失败时：不盲目重试，先核查状态再建议
-- 创建订单返回姓名、`FirstName`、`LastName`、身份证姓名相关异常时：说明"证件姓名格式不符合供应商要求"，只询问或更正姓名相关信息；不要归因于价格或余位
-- 认证、签名、网络或 JSON 错误：说明"服务暂时不可用或配置异常"，**不暴露**内部堆栈、Token、签名或原始错误内容
-- `TRAVELKIT_API_KEY` 缺失、无效、过期、未配置，或 MCP 返回认证/授权失败时，优先使用 `mcp-connection` ref 的 Missing API Key / Auth Failure 引导话术；引导开发者或管理员前往 https://www.travelkit.ai/ 注册或获取 API key，并明确不要在聊天中粘贴 API key
-- 服务或配置故障时：不要求用户重复提交个人信息
+## Error Output
 
-### 操作前安全检查
+- Read tool failure: brief reason plus useful next step.
+- Write tool failure: do not blindly retry; check status first when relevant.
+- Email errors (`email`, valid email, empty email, missing email): say `供应商要求乘机人邮箱`; ask only for email and do not re-collect other passenger data.
+- Name errors (`FirstName`, `LastName`, ID-card name): say `证件姓名格式不符合供应商要求`; ask only for name correction or split; do not blame price or inventory.
+- Service/config/auth/JSON errors: do not expose stack traces, tokens, signatures, raw errors, or API keys. For API-key/auth issues, use `mcp-connection` guidance and tell developers/admins to get a key at https://www.travelkit.ai/; never ask them to paste the key in chat.
+- On service/config failure, do not ask users to resend personal data.
 
-调用任何 TravelKit MCP 工具前，确认：
+## Pre-Tool Check
 
-- [ ] 用户当前任务是什么（搜索、预订、支付、退款、改签、取消、查单）
-- [ ] 是否有对应的 workflow 技能适用
-- [ ] 工具是只读还是状态变更
-- [ ] 如果是状态变更，用户是否已明确确认具体操作
-- [ ] 内部字段是否保持隐藏
-- [ ] 响应是否为面向普通用户的自然中文
-- [ ] 工具未返回的字段是否如实说明而非编造
-- [ ] 个人信息是否在正确的工作流阶段收集
+Before calling TravelKit MCP tools, verify intent, operation type, confirmation for writes, hidden internal fields, natural consumer output, no invented missing data, and correct passenger-data timing.

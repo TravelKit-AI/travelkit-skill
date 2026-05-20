@@ -2,25 +2,20 @@
 
 ## flight_create_order
 
-价格验证通过且用户确认继续后，收集乘客信息；下单前再次明确确认，创建订单但不自动支付。
+Use after `flight_verify_solution` succeeds and user confirms continuing. Create order only after a second explicit creation confirmation; never auto-pay.
 
-### When to use
+## Passenger Collection
 
-Use after `flight_verify_solution` succeeds and the user says they want to continue booking. Do not collect ID, passport, phone, or email before this point.
-
-### Passenger collection prompt
-
-Before collecting details, briefly state the document type needed. For Hong Kong/Macau/Taiwan routes or unclear route types, ask which valid travel document the passenger will use. Use natural Chinese + Markdown bullets, not code blocks or blank forms.
-
-Domestic mainland flights default to the ID-card Chinese-name template. Do not ask for pinyin or English surname/given names for domestic ID-card passengers. Use the passport English-name template only for international routes or passport/English-name document scenarios.
-
-When using a fixed prompt below, output it verbatim: do not rewrite it, compress it into one line, merge fields, remove fields, or change field order.
-Do not add examples, placeholders, date formats, or sample values to the fixed prompt. In particular, the birthday field must be exactly `- 出生日期`; never append any date example or format hint.
-Do not narrow passenger type choices based on the searched passenger count. The passenger type field must always be exactly `- 乘客类型：成人 / 儿童 / 婴儿`, even when the current request is for one adult.
+- Before verified price + user continuation: do not collect ID/passport, phone, email, birthday, or name.
+- Domestic mainland flights use Chinese document-name fields; do not ask for pinyin/English names.
+- International/passport scenarios use passport English name fields.
+- For Hong Kong/Macau/Taiwan or unclear routes, ask which valid travel document the passenger will use.
+- Use natural Chinese + Markdown bullets, not code blocks or blank forms.
+- Fixed prompts below must be output verbatim: do not rewrite, merge fields, add placeholders, add examples, or narrow passenger type.
 
 **Domestic fixed prompt - must output verbatim**:
 
-> 这趟是国内航班，后续需要乘机人身份证信息。请把下面信息发我，我再帮你创建订单，但不会自动支付：
+> 这趟是国内航班，后续需要乘机人证件信息。请把下面信息发我，我再帮你创建订单，但不会自动支付：
 > 中文姓名我会按证件姓名识别姓、名；如果复姓或拆分不确定，我再单独确认。
 
 - 乘机人姓名
@@ -28,56 +23,59 @@ Do not narrow passenger type choices based on the searched passenger count. The 
 - 性别
 - 乘客类型：成人 / 儿童 / 婴儿
 - 国籍
-- 证件类型：中国居民身份证 或 其他
-- 身份证号码
+- 证件类型
+- 证件号码
 - 乘机人手机号
-- 乘机人邮箱
+- 乘机人邮箱（可选：如果您希望我们通过邮箱给您发送通知，您可以填写邮箱）
 
 **International fixed prompt - must output verbatim**:
 
 > 这趟是国际航班，后续需要乘机人护照信息。请把下面信息发我，我再帮你创建订单，但不会自动支付：
 > 护照英文姓和英文名需要与护照完全一致。
 
-- 护照英文姓 / surname
-- 护照英文名 / given names
+- 护照英文姓
+- 护照英文名
 - 出生日期
 - 性别
 - 乘客类型：成人 / 儿童 / 婴儿
 - 国籍
 - 护照号码
-- 护照有效期
+- 护照有效期（请填写具体日期）
 - 乘机人手机号
-- 乘机人邮箱
+- 乘机人邮箱（可选：如果您希望我们通过邮箱给您发送通知，您可以填写邮箱）
 
-Every passenger must have phone, email, document type, and document number. ID card, Mainland Travel Permit, and Taiwan Travel Permit names use Chinese as shown on the document; passports use the passport English name. For ID-card passengers, ask users for one Chinese full name and split internally; ask only when compound surname, ethnic/minority name, English name, very long name, or rare characters make the split uncertain.
+## Passenger Rules
 
-If contact name/phone is absent, default to the first passenger's name and phone, mention this briefly before order creation, and do not collect contact email.
+- Required per passenger: phone, document type, document number.
+- Email is optional notification info. If absent, omit passenger `email`; if supplier requires/rejects missing email, ask only for email.
+- ID card, Mainland Travel Permit, and Taiwan Travel Permit names use Chinese as on document; passports use passport English name.
+- For ID-card passengers, split one Chinese full name internally. Ask only if compound surname, ethnic/minority name, English name, very long name, or rare characters make splitting unclear.
+- If document type is unclear or cannot map to supported `travelDocument`, ask only for document type clarification.
+- If contact name/phone is absent, default to first passenger's name/phone, mention this before creation, and do not collect contact email.
 
-### Confirmation before creation
+## Confirmation Before Creation
 
-Before `flight_create_order`, summarize flight/route, departure and arrival time, passengers, contact info including defaults, final price, and important tool-returned notices. Final price follows the shared amount rule: total price = fare + tax.
-
-The amount line in the pre-creation confirmation summary must use this single-line format:
+Before `flight_create_order`, summarize flight/route, departure/arrival time, passengers, contact info/defaults, final price, and returned notices. Amount line must be:
 
 > 金额：¥{总价}（票面价 ¥{票面价} + 税价 ¥{税价}）
 
-Do not use an equation-style amount line or split the pre-creation confirmation amount into separate fare/tax/total lines.
+If verified solution returned any segment `availability <= 3`, include remaining ticket count, e.g. `当前余票不多，仅剩 {availability} 张，请尽快完成预订和支付；未支付前票价和余票可能变化。` For multi-segment journeys, use lowest returned availability.
 
 Ask:
 > 确认后我会为你创建订单，但不会自动支付。是否确认创建？
 
-Call `flight_create_order` only after explicit confirmation. Use the verified `orderKey`; set all required internal confirmation fields in the tool call without mentioning production or technical flags to the user.
+Only after explicit confirmation, call `flight_create_order` with verified `orderKey` and required internal confirmation fields; do not mention production/technical flags.
 
-### After creation
+## After Creation
 
-After success, call `flight_order_detail` when useful and show the fixed order information template from `output-rules`. The user-facing order summary must include order info, passengers, segments, amount, and next step in that exact template order.
+- When useful, call `flight_order_detail` and show `output-rules` fixed order template.
+- Deadlines must come from explicit tool fields; if missing, use `output-rules` deadline wording.
+- Amount: total = fare + tax; sum fare/tax across passengers/segments. If only total is returned, mark fare/tax as `未返回`.
+- If unpaid, prompt payment options: domestic 微信、支付宝、信用卡、借记卡; international/cross-border also Airwallex.
+- If low inventory was known, include remaining ticket count and remind prompt payment, otherwise ticket may sell out.
 
-Deadlines must come from explicit tool fields. If missing, use the fixed deadline wording from `output-rules`.
+## Errors
 
-Amount must follow the shared amount rule: total price = fare + tax. Use returned fare and tax fields when available; for multiple passengers or segments, sum fare and tax separately before calculating total price. If the tool returns only total amount without a fare/tax split, use the fixed single amount line from `output-rules` and mark the missing split values as "未返回"; do not invent a split.
-
-If unpaid, prompt payment options without balance payment: domestic uses 微信、支付宝、信用卡、借记卡; international/cross-border can also include Airwallex.
-
-### Errors
-
-On failure, briefly explain and ask only for missing or corrected fields. Name-related errors (`FirstName`, `LastName`, ID-card full name, etc.) mean the document-name format does not meet supplier requirements; do not blame price or inventory. If an abnormal order is unpaid and unticketed, re-verify price before creating a corrected new order.
+- Ask only for missing/corrected fields; do not require resubmitting all passenger details.
+- Name errors (`FirstName`, `LastName`, ID-card full name) mean document-name format issue; ask only for name correction and do not blame price/inventory.
+- If an abnormal order is unpaid and unticketed, re-verify price before creating a corrected new order.

@@ -14,6 +14,7 @@
 | `flight_order_detail` | 查询订单详情（by TravelKit 订单号）|
 | `flight_order_detail_by_external_id` | 查询订单详情（by 外部订单号）|
 | `flight_order_list` | 查询历史订单列表 |
+| `flight_get_order_invoice_application` | 查询订单发票申请状态和是否可申请 |
 | `flight_download_itinerary` | 下载行程单 |
 | `flight_change_search` | 搜索可用改签选项 |
 | `flight_refund_quote` | 退款报价 |
@@ -28,6 +29,7 @@
 |------|------|
 | `flight_create_order` | 创建订单 |
 | `flight_pay_order` | 支付订单 |
+| `flight_create_order_invoice_application` | 创建订单发票申请 |
 | `flight_cancel_order` | 取消订单 |
 | `flight_refund_request` | 提交退票申请 |
 | `flight_refund_confirm` | 确认退票 |

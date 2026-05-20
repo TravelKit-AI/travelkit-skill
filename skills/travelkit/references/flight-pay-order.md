@@ -1,22 +1,20 @@
 # flight-pay-order ref
 
-## flight_pay_order
+## Purpose
 
-对已创建订单发起支付；永远不自动支付，必须经用户明确确认。
+Use `flight_pay_order` only for an already-created order when the user explicitly wants to pay. Never pay automatically.
 
-### 何时使用
+## Before Payment
 
-订单已创建（`flight_create_order` 成功），用户明确要求支付时。
+- Restate order number, amount, payment method, and known order status.
+- Amount follows `output-rules`: total = fare + tax.
+- If payment method is missing, ask the user to choose. Do not default.
+- User-facing methods: domestic can show 微信、支付宝、信用卡、借记卡; international can also show Airwallex.
+- Do not offer balance payment. If the user asks for it, show the supported user payment methods and ask them to choose again.
 
-### 支付前确认
+Internal channel mapping:
 
-调用 `flight_pay_order` 前，重述订单号、支付金额、支付方式、当前订单状态（已知时）。支付金额按共享金额口径核对：总价 = 票面价 + 税价。支付方式未知时先请用户选择，不自动填默认方式。
-
-面向用户提示支付方式时，不展示余额支付：国内可选微信、支付宝、信用卡、借记卡；国际可选 Airwallex、微信、支付宝、信用卡、借记卡。
-
-用户选择支付方式后，内部映射到工具支付渠道：
-
-| 用户说法 | 工具渠道 |
+| User method | Tool channel |
 |---|---|
 | Airwallex | `airwallex` |
 | 支付宝 | `yeepay-alipay` |
@@ -24,19 +22,18 @@
 | 信用卡 | `yeepay-credit-card` |
 | 借记卡 | `yeepay-debit-card` |
 
-用户要求余额支付时不直接执行，提示可选用户支付方式并让用户重新选择。
+Ask:
 
-询问：
 > 是否确认支付？
 
 - 支付金额：¥xxx
 - 订单号：xxxxxx
 
-**只有用户明确确认后**才发起支付。
+Call `flight_pay_order` only after explicit confirmation.
 
-### 支付发起成功后
+## Payment Link
 
-`flight_pay_order` 成功返回第三方支付链接后，必须使用以下固定格式展示；不要展示内部支付渠道名、原始 JSON、`returnUrl` 字段名或技术参数。
+After `flight_pay_order` returns a third-party payment link, use this exact format. Do not expose internal channel names, raw JSON, `returnUrl`, or technical parameters.
 
 ```markdown
 {支付方式}支付已发起，请打开链接完成付款：
@@ -50,22 +47,34 @@
 付款完成后告诉我一声，我帮你核查订单和出票状态。
 ```
 
-支付方式使用用户可见名称：微信、支付宝、信用卡、借记卡、Airwallex。支付链接缺失时不要编造链接，改为说明：`支付链接暂未返回，我会先核查订单支付状态。`
+- Payment method names: 微信、支付宝、信用卡、借记卡、Airwallex.
+- If payment link is missing, say: `支付链接暂未返回，我会先核查订单支付状态。`
+- Transaction fee must come from the tool. If fee is missing, show `未返回`; then payable total is also `未返回`.
+- Use the configured default third-party `returnUrl`; do not explain it to normal users.
 
-交易手续费必须来自工具返回；未返回时显示 `未返回`，不要自行估算。若交易手续费未返回，需支付合计也显示 `未返回`，不要自行计算。
+## Risk Checks
 
-### 异常情况处理
+Before retrying payment, call `flight_order_detail` if amount mismatches, fare + tax conflicts with returned total, order status is unclear, prior payment may be processing, order may be expired, or deadline is unclear.
 
-支付金额不符、工具返回总额与票面价加税价不一致、订单状态不明确、上次支付可能处理中、订单可能失效或截止时间不清楚时，先调用 `flight_order_detail` 核查，再决定是否重试支付。
+## After User Says Paid
 
-### 第三方支付
+Goal: check payment status and ticketing status without changing the order.
 
-第三方支付链接（`returnUrl`）使用已配置默认值，不要求普通用户理解其含义。
+1. Call read-only `flight_order_detail` immediately.
+2. If neither payment nor ticketing has a clear result, poll every 10 seconds（每 10 秒）.
+3. Stop after 12 total checks（12 次）, including the first immediate check.
+4. Use only `flight_order_detail`; never trigger pay, cancel, refund, or change during polling.
+5. Do not message the user on every poll. Reply only on a clear result, query failure, or after all 12 checks.
+6. Prefer background/timer/automation polling when available. If only synchronous waiting works, tell the user you are checking every 10 seconds. If the environment cannot wait or schedule, say so and ask the user to request another check later.
 
-### 支付后
+Clear results:
 
-支付完成后，使用 `flight_order_detail` 核查并展示 `output-rules` 中的订单信息固定模板。说明最终出票状态以工具返回为准。
+- Payment terminal states: paid/success, failed, canceled, expired, or any explicit payment result returned by the tool.
+- Ticketing terminal states: ticketed/success, failed, abnormal, or any explicit ticketing result returned by the tool.
+- Missing or ambiguous fields are not results; keep polling until the limit.
 
-### 错误处理
+Final notification must include order number, latest payment status, latest ticketing status, and next step. Use the `output-rules` order template when showing order details.
 
-支付失败时简短说明原因，先调用 `flight_order_detail` 核查当前订单状态，再决定是否重试，不盲目重试。
+## Errors
+
+On payment failure, briefly explain the returned reason, check current order status with `flight_order_detail`, then decide whether retry is appropriate. Do not blindly retry.

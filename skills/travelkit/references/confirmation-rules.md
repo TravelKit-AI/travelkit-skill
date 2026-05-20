@@ -44,6 +44,22 @@
 - 支付金额：¥xxx
 - 订单号：xxxxxx
 
+### 创建发票申请（flight_create_order_invoice_application）
+
+创建前必须先调用 `flight_get_order_invoice_application` 确认订单可申请发票。
+
+确认前重述：
+
+- 订单号
+- 开票公司名称
+- 纳税人识别号
+- 接收邮箱
+- 联系手机号
+- 公司地址、公司电话、开户银行、银行账号、备注（用户提供时）
+
+询问：
+> 确认提交该订单的发票申请吗？
+
 ### 取消订单（flight_cancel_order）
 
 确认前重述：
