@@ -1,7 +1,7 @@
 ---
 name: travelkit
 description: TravelKit flight booking and management skill. Use for flight search, pricing, real-time price verification, order creation, payment, cancellation, refund, change, itinerary download, and TravelKit MCP integration policy. Always use this skill for TravelKit flight lifecycle tasks.
-version: 1.0.4
+version: 1.0.5
 ---
 
 # TravelKit Flight Skill
@@ -23,7 +23,7 @@ Keep consumer replies in Simplified Chinese unless the user requests another lan
 | Refund | [flight-refund](references/flight-refund.md) | `flight_refund_quote`, `flight_refund_money_search`, `flight_refund_request`, `flight_refund_confirm` |
 | Change flight | [flight-change](references/flight-change.md) | `flight_change_search`, `flight_change_request` |
 | Download itinerary | [flight-itinerary](references/flight-itinerary.md) | `flight_download_itinerary` |
-| API key / credential issues | [platform-credentials](references/platform-credentials.md) | N/A |
+| API key / credential issues | [mcp-connection](references/mcp-connection.md) | N/A |
 
 ## Core Rules
 

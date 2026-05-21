@@ -10,6 +10,12 @@ This project follows a lightweight changelog format. Add entries under `Unreleas
 - Add open source project documentation, license, security policy, contribution guide, and GitHub templates.
 - Remove standalone known-issues documentation and keep issue tracking in GitHub.
 
+## 1.0.5
+
+- Added install and first-use guidance directing users to https://www.travelkit.ai/ to apply for or complete API key configuration.
+- Updated user-facing API key wording to say users should preferably not send API keys in chat.
+- Kept platform-managed credential handling and local MCP configuration prevention unchanged.
+
 ## 1.0.4
 
 - Renamed the credential/configuration reference from `mcp-connection.md` to `platform-credentials.md`.
