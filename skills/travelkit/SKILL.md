@@ -1,7 +1,7 @@
 ---
 name: travelkit
 description: TravelKit flight booking and management skill. Use for flight search, pricing, real-time price verification, order creation, payment, cancellation, refund, change, itinerary download, and TravelKit MCP integration policy. Always use this skill for TravelKit flight lifecycle tasks.
-version: 1.0.6
+version: 1.0.8
 ---
 
 # TravelKit Flight Skill

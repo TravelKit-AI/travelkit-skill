@@ -10,6 +10,13 @@ This project follows a lightweight changelog format. Add entries under `Unreleas
 - Add open source project documentation, license, security policy, contribution guide, and GitHub templates.
 - Remove standalone known-issues documentation and keep issue tracking in GitHub.
 
+## 1.0.8
+
+- Improved `mcp-connection.md` to keep first-use and API key troubleshooting guidance ahead of internal remote MCP HTTP reference details.
+- Restricted endpoint, header, and curl examples to platform developer/admin requests about remote MCP HTTP integration.
+- Kept local MCP setup prevention rules for `mcpServers`, `npx`, stdio setup, local MCP server installation, and local config JSON.
+- No MCP tool schemas or tool parameters were changed.
+
 ## 1.0.6
 
 - Republished the TravelKit release package from a clean skill bundle.
