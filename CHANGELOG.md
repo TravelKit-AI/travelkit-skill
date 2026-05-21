@@ -10,6 +10,13 @@ This project follows a lightweight changelog format. Add entries under `Unreleas
 - Add open source project documentation, license, security policy, contribution guide, and GitHub templates.
 - Remove standalone known-issues documentation and keep issue tracking in GitHub.
 
+## 1.0.6
+
+- Republished the TravelKit release package from a clean skill bundle.
+- Excluded unrelated hotel references and scripts from the ClawHub, GitHub, and SkillHub release artifacts.
+- Kept the v1.0.5 API key guidance, credential routing, and platform-managed credential behavior unchanged.
+- No MCP tool schemas or tool parameters were changed.
+
 ## 1.0.5
 
 - Added install and first-use guidance directing users to https://www.travelkit.ai/ to apply for or complete API key configuration.
