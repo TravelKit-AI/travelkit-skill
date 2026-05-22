@@ -10,6 +10,14 @@ This project follows a lightweight changelog format. Add entries under `Unreleas
 - Add open source project documentation, license, security policy, contribution guide, and GitHub templates.
 - Remove standalone known-issues documentation and keep issue tracking in GitHub.
 
+## 1.0.9
+
+- Updated ID-card passenger name handling so Chinese document names are no longer split into surname and given names.
+- For `travelDocument: idcard`, the full Chinese document name is sent in `givenNames` and `surname` is sent as an empty string.
+- Simplified the domestic passenger collection prompt to ask users to provide the name exactly as shown on the document, without exposing internal name-mapping details.
+- Updated name-error handling so ID-card passengers are asked only to verify or correct the full document name.
+- No MCP tool schemas or tool parameters were changed.
+
 ## 1.0.8
 
 - Improved `mcp-connection.md` to keep first-use and API key troubleshooting guidance ahead of internal remote MCP HTTP reference details.

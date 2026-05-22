@@ -16,7 +16,7 @@ Use after `flight_verify_solution` succeeds and user confirms continuing. Create
 **Domestic fixed prompt - must output verbatim**:
 
 > 这趟是国内航班，后续需要乘机人证件信息。请把下面信息发我，我再帮你创建订单，但不会自动支付：
-> 中文姓名我会按证件姓名识别姓、名；如果复姓或拆分不确定，我再单独确认。
+> 中文姓名请按证件姓名填写。
 
 - 乘机人姓名
 - 出生日期
@@ -49,7 +49,8 @@ Use after `flight_verify_solution` succeeds and user confirms continuing. Create
 - Required per passenger: phone, document type, document number.
 - Email is optional notification info. If absent, omit passenger `email`; if supplier requires/rejects missing email, ask only for email.
 - ID card, Mainland Travel Permit, and Taiwan Travel Permit names use Chinese as on document; passports use passport English name.
-- For ID-card passengers, split one Chinese full name internally. Ask only if compound surname, ethnic/minority name, English name, very long name, or rare characters make splitting unclear.
+- For `travelDocument: idcard`, do not split the Chinese document name. Put the full document name in `givenNames` and pass `surname` as an empty string. Do not ask for surname/given-name splitting for compound surnames, ethnic/minority names, long names, or rare characters.
+- Passport passengers still use passport English surname as `surname` and passport English given names as `givenNames`.
 - If document type is unclear or cannot map to supported `travelDocument`, ask only for document type clarification.
 - If contact name/phone is absent, default to first passenger's name/phone, mention this before creation, and do not collect contact email.
 
@@ -77,5 +78,5 @@ Only after explicit confirmation, call `flight_create_order` with verified `orde
 ## Errors
 
 - Ask only for missing/corrected fields; do not require resubmitting all passenger details.
-- Name errors (`FirstName`, `LastName`, ID-card full name) mean document-name format issue; ask only for name correction and do not blame price/inventory.
+- Name errors (`FirstName`, `LastName`, ID-card full name) mean document-name format issue. For ID-card passengers, ask only to verify or correct the full document name; do not ask for surname/given-name splitting and do not blame price/inventory.
 - If an abnormal order is unpaid and unticketed, re-verify price before creating a corrected new order.

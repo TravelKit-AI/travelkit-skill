@@ -76,7 +76,7 @@ When refund/change policy is returned as encoded time and amount rules, translat
 
 - Search stage: never collect ID/passport, phone, email, birthday, or gender.
 - After verified price and user says to proceed: collect passenger data through `flight-create-order`.
-- Do not guess passenger data. Chinese name splitting from a provided legal name is allowed; if uncertain, ask only for the name split.
+- Do not guess passenger data. For ID-card passengers, do not split Chinese document names; use the full document name according to `flight-create-order`. For passport passengers, use the provided passport English surname/given names.
 - Use natural Chinese bullets, not code blocks, gray form blocks, blank templates, or raw forms.
 - Fixed collection templates in `flight-create-order` must keep their fields and order.
 
@@ -85,7 +85,7 @@ When refund/change policy is returned as encoded time and amount rules, translat
 - Read tool failure: brief reason plus useful next step.
 - Write tool failure: do not blindly retry; check status first when relevant.
 - Email errors (`email`, valid email, empty email, missing email): say `供应商要求乘机人邮箱`; ask only for email and do not re-collect other passenger data.
-- Name errors (`FirstName`, `LastName`, ID-card name): say `证件姓名格式不符合供应商要求`; ask only for name correction or split; do not blame price or inventory.
+- Name errors (`FirstName`, `LastName`, ID-card name): say `证件姓名格式不符合供应商要求`. For ID-card passengers, ask only to verify or correct the full document name; do not ask for surname/given-name splitting. Do not blame price or inventory.
 - Service/config/auth/JSON errors: do not expose stack traces, tokens, signatures, raw errors, or API keys. For API-key/auth issues, use `mcp-connection` guidance; tell users to go to https://www.travelkit.ai/ to apply/configure credentials, and never ask them to paste the key in chat.
 - On service/config failure, do not ask users to resend personal data.
 
