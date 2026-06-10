@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability / 安全漏洞
+    url: https://github.com/TravelKit-AI/travelkit-skill/security/policy
+    about: Please report sensitive vulnerabilities privately. Do not open public issues with credentials, passenger data, order data, or exploit details. / 请私下报告敏感安全漏洞，不要在公开 Issue 中披露凭证、乘客信息、订单信息或利用细节。
+  - name: Questions and discussion / 问题与讨论
+    url: https://github.com/TravelKit-AI/travelkit-skill/discussions
+    about: Use Discussions for open-ended questions, ideas, and community help. / 开放式问题、想法和社区互助请使用 Discussions。

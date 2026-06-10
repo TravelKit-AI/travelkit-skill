@@ -9,6 +9,7 @@ Never commit:
 - Real `TRAVELKIT_API_KEY` values, access tokens, private keys, signatures, cookies, or session data.
 - Passenger names, birthdays, ID card numbers, passport numbers, phone numbers, emails, order payloads, ticket numbers, or itinerary files from real users.
 - Raw MCP responses that contain hidden fields or personal information.
+- Internal fields such as `solutionId`, `orderKey`, `externalOrderId`, confirmation flags, raw passenger IDs, segment IDs, `idempotencyKey`, or raw MCP JSON.
 - Production logs or screenshots that contain credentials or personal data.
 
 ## Reporting a Vulnerability
@@ -28,7 +29,7 @@ Report privately through GitHub private vulnerability reporting if it is enabled
 Contributions should preserve these rules:
 
 - State-changing MCP tools require explicit user confirmation before every call.
-- Internal fields such as `solutionId`, `orderKey`, confirmation flags, raw passenger IDs, segment IDs, and raw MCP JSON stay hidden from normal users.
+- Internal fields such as `solutionId`, `orderKey`, `externalOrderId`, confirmation flags, raw passenger IDs, segment IDs, `idempotencyKey`, and raw MCP JSON stay hidden from normal users.
 - Passenger and document data is collected only after the user chooses a flight, price is verified, and the user wants to continue booking.
 - Missing tool-returned baggage, refund, change, ticketing, or policy details are reported as missing, not invented.
 - Authentication, signing, network, and service configuration errors are summarized without exposing stack traces, tokens, signatures, or raw error payloads.

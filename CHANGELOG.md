@@ -6,6 +6,12 @@ This project follows a lightweight changelog format. Add entries under `Unreleas
 
 ## Unreleased
 
+## 1.1.0 - 2026-06-10
+
+- Add the 易宝移动支付 user-facing payment method mapped to `yeepay-mobile`.
+- Clarify Skill/MCP responsibility layering so agents route through the skill workflow before using TravelKit MCP tools as execution primitives.
+- Add host-provided daily version-check guidance so the skill can show non-blocking update notices when SkillHub or the host reports an outdated installed version.
+- Add lightweight pre-search requirement parsing, clarification, and abnormal flight-number/airport-code handling guidance.
 - Document v1 skill core capabilities and usage boundaries in the README.
 - Add open source project documentation, license, security policy, contribution guide, and GitHub templates.
 - Remove standalone known-issues documentation and keep issue tracking in GitHub.

@@ -72,7 +72,7 @@ Only after explicit confirmation, call `flight_create_order` with verified `orde
 - When useful, call `flight_order_detail` and show `output-rules` fixed order template.
 - Deadlines must come from explicit tool fields; if missing, use `output-rules` deadline wording.
 - Amount: total = fare + tax; sum fare/tax across passengers/segments. If only total is returned, mark fare/tax as `未返回`.
-- If unpaid, prompt payment options: domestic 微信、支付宝、信用卡、借记卡; international/cross-border also Airwallex.
+- If unpaid, prompt payment options: domestic 微信、支付宝、易宝移动支付、信用卡、借记卡; international/cross-border also Airwallex.
 - If low inventory was known, include remaining ticket count and remind prompt payment, otherwise ticket may sell out.
 
 ## Errors

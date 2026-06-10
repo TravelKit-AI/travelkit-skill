@@ -9,7 +9,7 @@ Use `flight_pay_order` only for an already-created order when the user explicitl
 - Restate order number, amount, payment method, and known order status.
 - Amount follows `output-rules`: total = fare + tax.
 - If payment method is missing, ask the user to choose. Do not default.
-- User-facing methods: domestic can show 微信、支付宝、信用卡、借记卡; international can also show Airwallex.
+- User-facing methods: domestic can show 微信、支付宝、易宝移动支付、信用卡、借记卡; international can also show Airwallex.
 - Do not offer balance payment. If the user asks for it, show the supported user payment methods and ask them to choose again.
 
 Internal channel mapping:
@@ -19,6 +19,7 @@ Internal channel mapping:
 | Airwallex | `airwallex` |
 | 支付宝 | `yeepay-alipay` |
 | 微信 | `yeepay-wechat` |
+| 易宝移动支付 | `yeepay-mobile` |
 | 信用卡 | `yeepay-credit-card` |
 | 借记卡 | `yeepay-debit-card` |
 
@@ -47,7 +48,7 @@ After `flight_pay_order` returns a third-party payment link, use this exact form
 付款完成后告诉我一声，我帮你核查订单和出票状态。
 ```
 
-- Payment method names: 微信、支付宝、信用卡、借记卡、Airwallex.
+- Payment method names: 微信、支付宝、易宝移动支付、信用卡、借记卡、Airwallex.
 - If payment link is missing, say: `支付链接暂未返回，我会先核查订单支付状态。`
 - Transaction fee must come from the tool. If fee is missing, show `未返回`; then payable total is also `未返回`.
 - Use the configured default third-party `returnUrl`; do not explain it to normal users.

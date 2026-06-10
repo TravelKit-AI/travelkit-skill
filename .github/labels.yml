@@ -1,0 +1,57 @@
+# Suggested GitHub labels for this repository.
+# Apply manually in GitHub settings or with a label sync tool.
+
+- name: bug
+  color: d73a4a
+  description: Something is broken, unsafe, or confusing.
+- name: feature
+  color: a2eeef
+  description: New capability or workflow improvement.
+- name: documentation
+  color: 0075ca
+  description: README, contribution, reference, or example updates.
+- name: security
+  color: b60205
+  description: Security-sensitive behavior or policy.
+- name: question
+  color: d876e3
+  description: Needs clarification or community help.
+
+- name: good first issue
+  color: 7057ff
+  description: Small, well-scoped task for new contributors.
+- name: help wanted
+  color: 008672
+  description: Maintainers welcome external contributions.
+- name: needs maintainer input
+  color: fbca04
+  description: Needs a maintainer decision before implementation.
+
+- name: flight-search
+  color: c5def5
+  description: Flight search and comparison behavior.
+- name: booking
+  color: c5def5
+  description: Price verification, passenger collection, or order creation.
+- name: payment
+  color: c5def5
+  description: Payment confirmation and order payment behavior.
+- name: refund
+  color: c5def5
+  description: Refund quote, request, and confirmation behavior.
+- name: change
+  color: c5def5
+  description: Flight change search and request behavior.
+- name: agent-integration
+  color: c5def5
+  description: MCP connection, hidden fields, confirmation policy, and output rules.
+
+- name: needs reproduction
+  color: fef2c0
+  description: Needs a mock-data reproduction before work can proceed.
+- name: blocked
+  color: e4e669
+  description: Cannot proceed until an external dependency or decision is resolved.
+- name: ready for PR
+  color: 0e8a16
+  description: Issue is clear enough for a contributor to implement.

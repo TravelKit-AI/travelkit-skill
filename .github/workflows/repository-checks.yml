@@ -1,0 +1,79 @@
+name: Repository checks
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  repository-checks:
+    name: Repository checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check whitespace
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git diff --check "origin/${{ github.base_ref }}...HEAD"
+          elif [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]; then
+            git diff --check "${{ github.event.before }}..${{ github.sha }}"
+          else
+            git diff --check HEAD
+          fi
+
+      - name: Reject trailing whitespace
+        shell: bash
+        run: |
+          if grep -RIn --exclude-dir=.git --exclude-dir=.idea --exclude='*.zip' --exclude='*.png' --exclude='*.jpg' --exclude='*.jpeg' --exclude='*.gif' --exclude='*.pdf' '[[:blank:]]$' .; then
+            echo "Trailing whitespace found."
+            exit 1
+          fi
+
+      - name: Check governance files
+        shell: bash
+        run: |
+          test -f README.md
+          test -f CONTRIBUTING.md
+          test -f SECURITY.md
+          test -f CODE_OF_CONDUCT.md
+          test -f LICENSE
+          test -f .github/CODEOWNERS
+          test -f .github/pull_request_template.md
+          test -f .github/ISSUE_TEMPLATE/bug_report.md
+          test -f .github/ISSUE_TEMPLATE/feature_request.md
+          test -f .github/ISSUE_TEMPLATE/documentation.md
+          test -f RELEASE.md
+          test -x scripts/package-skill.sh
+          test -x scripts/check-skill-package.sh
+
+      - name: Reject removed known-issues references
+        shell: bash
+        run: |
+          known_file="KNOWN""_ISSUES.md"
+          known_title="Known ""Issues"
+          known_title_cn="已知""问题"
+          if grep -RIn --exclude-dir=.git --exclude-dir=.idea --exclude='repository-checks.yml' -e "$known_file" -e "$known_title" -e "$known_title_cn" .; then
+            echo "Removed known-issues documentation is still referenced."
+            exit 1
+          fi
+
+      - name: Check hidden-field policy consistency
+        shell: bash
+        run: |
+          for file in README.md SECURITY.md .github/pull_request_template.md; do
+            grep -q 'solutionId' "$file"
+            grep -q 'orderKey' "$file"
+            grep -q 'externalOrderId' "$file"
+            grep -q 'idempotencyKey' "$file"
+            grep -q 'raw MCP JSON' "$file"
+          done
+
+      - name: Check skill package
+        shell: bash
+        run: scripts/check-skill-package.sh

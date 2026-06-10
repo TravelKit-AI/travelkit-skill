@@ -1,12 +1,33 @@
 ---
 name: travelkit
 description: TravelKit flight booking and management skill. Use for flight search, pricing, real-time price verification, order creation, payment, cancellation, refund, change, itinerary download, and TravelKit MCP integration policy. Always use this skill for TravelKit flight lifecycle tasks.
-version: 1.0.9
+version: 1.1.0
 ---
 
 # TravelKit Flight Skill
 
 Keep consumer replies in Simplified Chinese unless the user requests another language. Load only the smallest reference needed for the current step; do not preload shared references unless the active workflow points to them.
+
+## Tool Routing
+
+When this skill applies, always follow this skill workflow first. TravelKit MCP tools are execution primitives inside the workflow, not standalone business entry points.
+
+- Use the Fast Routing table to choose the workflow reference before calling any MCP tool.
+- Call MCP tools only when the active workflow explicitly instructs the call and all required preconditions are met.
+- Do not bypass skill rules because a tool description appears to match the user's request.
+- Keep business decisions, safety checks, user confirmations, passenger-data timing, and output formatting in the skill workflow.
+- Treat MCP tool results as raw capability results; summarize and continue through the skill rules instead of exposing raw tool behavior to users.
+- Before search, lightweight requirement parsing may normalize user intent into internal query parameters. Do not output JSON or a full parsed-field list to normal users unless they explicitly ask for that format.
+
+## Version Notice
+
+If the host platform or SkillHub injects daily version-check facts, consume them without trying to verify versions independently.
+
+- If `skillVersionStatus` is `outdated`, briefly tell the user the installed TravelKit Skill version is not the latest and recommend updating through SkillHub or the host platform. Include `installedVersion`, `latestVersion`, and `updateUrl` only when provided.
+- If `skillVersionStatus` is `latest`, do not mention version status.
+- If `skillVersionStatus` is `unknown`, do not claim the installed skill is outdated. Only suggest checking SkillHub or the project release page when the user asks about installation, configuration, version, updates, missing tools, API key setup, or unexpected behavior.
+- Version notices must not block or derail normal flight search, booking, payment, refund, change, order lookup, or itinerary workflows.
+- Do not create timers, background jobs, or version polling from the skill. Daily check frequency and per-user/per-workspace state belong to the host platform.
 
 ## Fast Routing
 

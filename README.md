@@ -1,5 +1,7 @@
 # TravelKit-AI
 
+[![Repository checks](https://github.com/TravelKit-AI/travelkit-skill/actions/workflows/repository-checks.yml/badge.svg)](https://github.com/TravelKit-AI/travelkit-skill/actions/workflows/repository-checks.yml)
+
 TravelKit-AI is a set of reusable agent instructions for agents that work with TravelKit flight MCP tools. The skills define consumer-facing flight shopping, booking, payment safety, order aftercare, and shared integration policy.
 
 The project is prompt and policy content, not a standalone flight API client. It assumes a TravelKit MCP server is connected by the host agent or application.
@@ -27,9 +29,18 @@ The first version of the `travelkit` skill covers the full consumer flight lifec
 | **Order Aftercare** | Look up order details or lists, cancel eligible orders, quote/request refunds, search/submit changes, and download itineraries. |
 | **Agent Integration** | Document MCP connection requirements, read/write tool categories, hidden fields, confirmation rules, and consumer-facing output rules. |
 
-## Known Issues
+## Contributing / 参与贡献
 
-See [Known Issues](KNOWN_ISSUES.md) for current v1 cross-agent behavior gaps and result-handling issues.
+TravelKit-AI is managed as an open source GitHub project. Community members can report issues, propose improvements, discuss ideas, and submit pull requests.
+
+TravelKit-AI 按开源 GitHub 项目方式管理。社区用户可以反馈问题、提出改进建议、参与讨论并提交 Pull Request。
+
+- **Report a bug / 报告错误**: Open a bug issue with mock data only. Do not include real passenger data, order data, ticket numbers, credentials, logs, or raw MCP responses.
+- **Request a feature / 提出功能建议**: Open a feature issue and describe the user workflow, affected TravelKit area, and expected behavior.
+- **Improve docs / 改进文档**: Open a documentation issue or pull request for README, skill references, examples, or contribution docs.
+- **Ask questions / 提问讨论**: Use GitHub Discussions for open-ended questions, ideas, and community help.
+- **Submit a pull request / 提交 PR**: Read [CONTRIBUTING.md](CONTRIBUTING.md), fork the repository, create a focused branch, and complete the pull request checklist.
+- **Report security issues / 报告安全问题**: Follow [SECURITY.md](SECURITY.md). Do not disclose vulnerabilities, credentials, personal data, or production order data in public issues.
 
 ## Usage Boundaries
 
@@ -57,12 +68,27 @@ The skills intentionally do not include API credentials, private endpoints, or l
 
 ## Installation
 
-Copy, symlink, or import the skill directories according to your agent framework's instruction-loading mechanism.
+Install from the source directory or from the release package according to your agent framework's instruction-loading mechanism.
+
+### From Source / 从源码目录安装
+
+Copy, symlink, or import the skill directory:
 
 ```bash
 mkdir -p /path/to/your-agent/skills
 cp -R skills/travelkit /path/to/your-agent/skills/
 ```
+
+### From Release Zip / 从发布压缩包安装
+
+Download `travelkit.zip` from the latest GitHub Release, then extract it into your agent's skills directory:
+
+```bash
+mkdir -p /path/to/your-agent/skills
+unzip travelkit.zip -d /path/to/your-agent/skills/
+```
+
+The committed package `skills/travelkit.zip` is a release artifact and must stay in sync with `skills/travelkit/`. Maintainers should rebuild it with `scripts/package-skill.sh` before tagging a release.
 
 If your framework does not support directory-based skills, import the relevant `SKILL.md` files as system instructions or workflow policy for your agent.
 
@@ -95,6 +121,28 @@ curl -X POST https://mcp.travelkit.ai/mcp \
 ```
 
 Do **not** write `TRAVELKIT_API_KEY` into `SKILL.md`, logs, or user-visible messages.
+
+## Skill And MCP Responsibilities
+
+Use the skill as the workflow and policy layer, and use MCP tools as low-level execution primitives.
+
+- Skill owns user-intent routing, workflow order, confirmations, safety checks, passenger-data timing, output format, and error handling.
+- MCP tools own live execution only: search, price verification, order creation, payment, order lookup, cancellation, refund, change, and itinerary download.
+- MCP tool descriptions should not compete with the skill as business entry points. Prefer capability wording such as "Low-level tool used by the TravelKit flight workflow..." instead of "Use this tool when the user wants to book a flight."
+- If the agent platform supports staged exposure, expose TravelKit MCP tools after this skill is selected. If all tools are always visible, the agent must still follow `SKILL.md` Tool Routing before any MCP call.
+
+## Version Update Notices
+
+Skill update checks should be handled by SkillHub or the host agent platform, not by the skill itself. A recommended integration is to check once per user or workspace on the first TravelKit Skill use each day, then inject version facts into the agent context:
+
+- `skillVersionStatus`: `outdated`, `latest`, or `unknown`
+- `installedVersion`: currently installed TravelKit Skill version
+- `latestVersion`: latest TravelKit Skill version known to SkillHub or the host platform
+- `updateUrl`: optional SkillHub, host-platform, or release-page URL
+
+When the injected status is `outdated`, the skill may show a short non-blocking update notice. When the status is `latest`, it stays silent. When the status is `unknown`, the skill must not claim the installed version is outdated; it only suggests checking SkillHub or the release page in installation, configuration, API key, missing-tool, unexpected-behavior, version, or update conversations.
+
+The skill does not store user state, run timers, or independently query latest versions. Daily check frequency, persistence such as `lastSkillVersionCheckAt`, and update-source selection belong to the host platform.
 
 ## Usage
 
@@ -149,6 +197,7 @@ flight_order_detail             ← verify final ticket status
 - **Hide internals** — never expose `solutionId`, `orderKey`, `externalOrderId`, confirmation flags, raw `passengerIds`/`segmentIds`, `idempotencyKey`, API keys, or raw MCP JSON to normal users.
 - **Confirm before every write** — restate key details and get explicit confirmation before calling any write tool. Generic intent ("帮我订", "退了吧") is not sufficient.
 - **Collect personal info at the right stage** — collect passport / ID card / birthday / phone / email only after price verification passes and the user confirms they want to proceed with booking.
+- **Route through the skill first** — TravelKit MCP tools are execution primitives, not standalone business workflows. Choose the skill workflow before calling any tool.
 - **Never invent missing data** — if baggage, refund, change, ticketing, or policy details are not returned by tools, say they were not returned.
 - **Simplified Chinese by default** — respond in Simplified Chinese for normal consumers unless the user requests another language.
 - **Self-contained rules** — the agent must enforce all rules above independently of whether TravelKit MCP server prompts are loaded.
@@ -177,9 +226,11 @@ skills/
       output-rules.md               # user-facing output rules
 ```
 
-## Contributing
+## Community / 社区
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. Security-sensitive reports should follow [SECURITY.md](SECURITY.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md), [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md), and [SECURITY.md](SECURITY.md) before opening issues, discussions, or pull requests.
+
+创建 Issue、Discussion 或 Pull Request 前，请阅读 [CONTRIBUTING.md](CONTRIBUTING.md)、[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) 和 [SECURITY.md](SECURITY.md)。
 
 ## License
 
