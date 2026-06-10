@@ -31,7 +31,6 @@ find "$tmp_dir/travelkit" \( \
   -name '._*' \
 \) -exec rm -rf {} +
 
-rm -f "$tmp_dir/travelkit/references"/hotel-*.md
 rm -rf "$tmp_dir/travelkit/scripts"
 
 find "$tmp_dir/travelkit" -exec touch -t 202601010000 {} +
